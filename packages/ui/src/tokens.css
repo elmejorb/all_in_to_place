@@ -1,0 +1,164 @@
+/* Sistema de diseño compartido por las dos aplicaciones (IU-01).
+   Cada una fija su identidad con data-app: verde la de empresa, morado la
+   consola, para que nadie confunda dónde está trabajando (IU-02).
+   Tema claro y oscuro completos, respetando la preferencia del sistema (IU-03). */
+
+:root {
+  --marca: #0c8471;
+  --marca-fuerte: #075f51;
+  --marca-suave: #e0eeea;
+  /* Color del texto sobre la marca. Cambia con el tema para no perder
+     contraste: en oscuro la marca se aclara y el texto tiene que oscurecerse (RNF-04). */
+  --sobre-marca: #ffffff;
+
+  --papel: #f3f6f4;
+  --superficie: #ffffff;
+  --superficie-2: #eaefec;
+  --texto: #0f2a27;
+  --texto-2: #3b5a55;
+  --tenue: #6d8681;
+  --borde: #d6e0dc;
+
+  --peligro: #9e3b34;
+  --peligro-suave: #fbeceb;
+  --aviso: #9c5c07;
+  --bien: #0c8471;
+
+  --radio: 8px;
+  --sombra: 0 1px 2px rgba(15, 42, 39, .05), 0 12px 32px -20px rgba(15, 42, 39, .45);
+  --tipo: "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  color-scheme: light;
+}
+
+[data-app="consola"] {
+  --marca: #6a5cf0;
+  --marca-fuerte: #4c3fd0;
+  --marca-suave: #eae7fe;
+  --papel: #f5f5fb;
+  --superficie: #ffffff;
+  --superficie-2: #edecf7;
+  --texto: #1c1a3a;
+  --texto-2: #454273;
+  --tenue: #7c7aa3;
+  --borde: #dedcf0;
+  --bien: #6a5cf0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --papel: #0c1817;
+    --superficie: #12211f;
+    --superficie-2: #182b28;
+    --texto: #e9efec;
+    --texto-2: #b7c9c4;
+    --tenue: #8ba49e;
+    --borde: #26403b;
+    --marca: #4dc1a6;
+    --marca-fuerte: #7fd8c1;
+    --marca-suave: #12302a;
+    --sobre-marca: #05211c;
+    --peligro: #e07c73;
+    --peligro-suave: #2d1a18;
+    --bien: #4dc1a6;
+    color-scheme: dark;
+  }
+
+  :root:not([data-tema="claro"])[data-app="consola"] {
+    --papel: #0f0e1c;
+    --superficie: #171630;
+    --superficie-2: #1f1d40;
+    --texto: #eceaff;
+    --texto-2: #b9b6e4;
+    --tenue: #8a87b8;
+    --borde: #2e2b57;
+    --marca: #9b90ff;
+    --marca-fuerte: #b8b0ff;
+    --marca-suave: #221f47;
+    --sobre-marca: #14113a;
+    --bien: #9b90ff;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--texto);
+  font-family: var(--tipo);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.campo { display: flex; flex-direction: column; gap: .3rem; }
+.campo label { font-size: .82rem; font-weight: 600; color: var(--texto-2); }
+.campo input {
+  font: inherit;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: .6rem .7rem;
+  width: 100%;
+}
+.campo input:disabled { background: var(--superficie-2); color: var(--tenue); }
+.campo .error { color: var(--peligro); font-size: .82rem; }
+.campo[data-invalido="true"] input { border-color: var(--peligro); }
+
+.boton {
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--radio);
+  padding: .6rem 1rem;
+  cursor: pointer;
+  background: var(--marca);
+  color: var(--sobre-marca);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 42px;
+}
+.boton:hover:not(:disabled) { background: var(--marca-fuerte); }
+.boton:disabled { opacity: .6; cursor: progress; }
+.boton[data-variante="suave"] {
+  background: var(--superficie);
+  color: var(--texto);
+  border-color: var(--borde);
+}
+.boton[data-variante="suave"]:hover:not(:disabled) { background: var(--superficie-2); }
+
+.aviso {
+  background: var(--peligro-suave);
+  color: var(--peligro);
+  border: 1px solid currentColor;
+  border-radius: var(--radio);
+  padding: .6rem .75rem;
+  font-size: .9rem;
+}
+
+.girador {
+  width: 15px; height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: girar .7s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .girador { animation: none; } }
