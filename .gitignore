@@ -40,3 +40,6 @@ test-results/
 
 # Capturas de las pruebas de navegador: se regeneran en cada corrida
 api/tests/navegador/capturas/
+
+# Cache del compilador de TypeScript
+*.tsbuildinfo

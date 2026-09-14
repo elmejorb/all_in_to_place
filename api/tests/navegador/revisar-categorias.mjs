@@ -3,6 +3,7 @@
  * Uso: node api/tests/navegador/revisar-categorias.mjs
  */
 import { chromium } from "playwright";
+import { entrar, irA, abrirEmpresas, salir } from "./_ayudas.mjs";
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -21,11 +22,9 @@ function revisar(descripcion, condicion) {
 
 const capturar = (pagina, nombre) => pagina.screenshot({ path: join(RAIZ, `${nombre}.png`), fullPage: true });
 
-async function entrar(pagina, email) {
-  await pagina.goto(EMPRESA, { waitUntil: "networkidle" });
-  await pagina.fill("#email", email);
-  await pagina.fill("#clave", CLAVE);
-  await pagina.click('button[type="submit"]');
+async function entrarYVerCategorias(pagina, email) {
+  await entrar(pagina, email);
+  await irA(pagina, "Categorías");
 }
 
 /** Contraste WCAG entre dos colores calculados. */
@@ -64,9 +63,7 @@ try {
     for (const r of respuestasMalas) console.log("   " + r);
   });
 
-  await entrar(pagina, "pedro@elalamo.test");
-  await pagina.click('nav.nav button:has-text("Categorías")');
-  await pagina.waitForSelector("table.tabla");
+  await entrarYVerCategorias(pagina, "pedro@elalamo.test");
   await capturar(pagina, "40-categorias-listado");
 
   revisar("Muestra las cuatro categorías de la panadería", (await pagina.locator("table.tabla tbody tr").count()) === 4);
@@ -162,8 +159,7 @@ try {
   // --- tema oscuro ------------------------------------------------------
   const oscuro = await navegador.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
   const poscuro = await oscuro.newPage();
-  await entrar(poscuro, "pedro@elalamo.test");
-  await poscuro.click('nav.nav button:has-text("Categorías")');
+  await entrarYVerCategorias(poscuro, "pedro@elalamo.test");
   await poscuro.waitForSelector(".etiqueta-color");
   await capturar(poscuro, "44-categorias-tema-oscuro");
 
@@ -181,9 +177,7 @@ try {
   // --- móvil -------------------------------------------------------------
   const movil = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const pmovil = await movil.newPage();
-  await entrar(pmovil, "pedro@elalamo.test");
-  await pmovil.click('nav.nav button:has-text("Categorías")');
-  await pmovil.waitForSelector("table.tabla");
+  await entrarYVerCategorias(pmovil, "pedro@elalamo.test");
   await capturar(pmovil, "45-categorias-movil-390");
   const desborde = await pmovil.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   revisar("En 390 px la página no se desplaza en horizontal", !desborde);

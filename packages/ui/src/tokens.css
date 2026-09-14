@@ -1,83 +1,213 @@
 /* Sistema de diseño compartido por las dos aplicaciones (IU-01).
-   Cada una fija su identidad con data-app: verde la de empresa, morado la
-   consola, para que nadie confunda dónde está trabajando (IU-02).
-   Tema claro y oscuro completos, respetando la preferencia del sistema (IU-03). */
+ *
+ * Criterio: herramienta de trabajo, no folleto. Quien la usa pasa el día aquí,
+ * así que manda la densidad —ver muchas filas sin desplazar— y la legibilidad
+ * de las cifras. La tipografía es IBM Plex Sans por sus números tabulares, que
+ * alinean solos en las columnas de dinero.
+ *
+ * Cada aplicación fija su identidad con data-app: verde la de empresa, morado
+ * la consola, para que nadie confunda dónde está trabajando (IU-02).
+ * Tema claro y oscuro completos, con preferencia del sistema o elección
+ * explícita en data-tema (IU-03).
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 :root {
+  /* --- marca --- */
   --marca: #0c8471;
   --marca-fuerte: #075f51;
-  --marca-suave: #e0eeea;
-  /* Color del texto sobre la marca. Cambia con el tema para no perder
-     contraste: en oscuro la marca se aclara y el texto tiene que oscurecerse (RNF-04). */
+  --marca-suave: #e2efeb;
   --sobre-marca: #ffffff;
 
-  --papel: #f3f6f4;
+  /* Barra lateral: superficie oscura también en tema claro. Da jerarquía y
+     separa la navegación del contenido de trabajo. */
+  --rail: #0e2a26;
+  --rail-2: #16403a;
+  --rail-texto: #b9cfc9;
+  --rail-texto-fuerte: #f2f8f6;
+  --rail-activo: #164b41;
+  --rail-borde: #1d4a42;
+
+  /* --- neutros, con sesgo hacia el verde de la marca --- */
+  --papel: #eef2f1;
   --superficie: #ffffff;
-  --superficie-2: #eaefec;
-  --texto: #0f2a27;
-  --texto-2: #3b5a55;
-  --tenue: #6d8681;
-  --borde: #d6e0dc;
+  --superficie-2: #f5f8f7;
+  --superficie-3: #eaefed;
+  --texto: #0d2320;
+  --texto-2: #3b524e;
+  --tenue: #6f8782;
+  --borde: #dbe3e1;
+  --borde-fuerte: #c3cfcc;
 
-  --peligro: #9e3b34;
+  /* --- semánticos, separados del color de marca --- */
+  --peligro: #a3352c;
   --peligro-suave: #fbeceb;
-  --aviso: #9c5c07;
-  --bien: #0c8471;
+  --aviso: #8a5205;
+  --aviso-suave: #fbf0dc;
+  --bien: #0c7a58;
+  --bien-suave: #ddf1e8;
 
-  --radio: 8px;
-  --sombra: 0 1px 2px rgba(15, 42, 39, .05), 0 12px 32px -20px rgba(15, 42, 39, .45);
-  --tipo: "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* --- escala tipográfica, compacta --- */
+  --tipo: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --tipo-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --t-micro: 0.6875rem;   /* 11px  etiquetas de columna */
+  --t-menor: 0.75rem;     /* 12px  apoyo */
+  --t-base: 0.8125rem;    /* 13px  tablas y formularios */
+  --t-control: 0.8125rem;
+  --t-medio: 0.9375rem;   /* 15px  títulos de sección */
+  --t-mayor: 1.125rem;    /* 18px  título de pantalla */
+
+  /* --- espaciado --- */
+  --e1: 0.25rem;
+  --e2: 0.5rem;
+  --e3: 0.75rem;
+  --e4: 1rem;
+  --e5: 1.5rem;
+  --e6: 2rem;
+
+  --radio: 6px;
+  --radio-menor: 4px;
+  --fila: 2.125rem;       /* alto de fila de tabla: denso pero tocable */
+  --control: 2rem;        /* alto de campos y botones */
+
+  --sombra: 0 1px 2px rgba(13, 35, 32, .06);
+  --sombra-flotante: 0 8px 24px -10px rgba(13, 35, 32, .28), 0 2px 6px rgba(13, 35, 32, .08);
 
   color-scheme: light;
 }
 
 [data-app="consola"] {
-  --marca: #6a5cf0;
-  --marca-fuerte: #4c3fd0;
-  --marca-suave: #eae7fe;
-  --papel: #f5f5fb;
-  --superficie: #ffffff;
-  --superficie-2: #edecf7;
-  --texto: #1c1a3a;
-  --texto-2: #454273;
-  --tenue: #7c7aa3;
-  --borde: #dedcf0;
-  --bien: #6a5cf0;
+  --marca: #5b4ee0;
+  --marca-fuerte: #4336c4;
+  --marca-suave: #e8e6fd;
+  --rail: #1c1940;
+  --rail-2: #2a2560;
+  --rail-texto: #bcb8e6;
+  --rail-texto-fuerte: #f1effe;
+  --rail-activo: #322c6e;
+  --rail-borde: #332d68;
+  --papel: #f1f0f8;
+  --superficie-2: #f7f6fc;
+  --superficie-3: #eceafa;
+  --texto: #16142e;
+  --texto-2: #3f3b66;
+  --tenue: #726e99;
+  --borde: #e0ddf0;
+  --borde-fuerte: #cac5e6;
+  --bien: #5b4ee0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --papel: #0c1817;
-    --superficie: #12211f;
-    --superficie-2: #182b28;
-    --texto: #e9efec;
-    --texto-2: #b7c9c4;
-    --tenue: #8ba49e;
-    --borde: #26403b;
+    --papel: #0b1615;
+    --superficie: #111f1d;
+    --superficie-2: #162825;
+    --superficie-3: #1b302c;
+    --texto: #e8efec;
+    --texto-2: #b3c6c1;
+    --tenue: #85a09a;
+    --borde: #233a36;
+    --borde-fuerte: #31504a;
     --marca: #4dc1a6;
     --marca-fuerte: #7fd8c1;
-    --marca-suave: #12302a;
+    --marca-suave: #123029;
     --sobre-marca: #05211c;
-    --peligro: #e07c73;
-    --peligro-suave: #2d1a18;
+    --rail: #0a1614;
+    --rail-2: #112421;
+    --rail-texto: #94aca7;
+    --rail-texto-fuerte: #eaf3f0;
+    --rail-activo: #17332d;
+    --rail-borde: #1c3531;
+    --peligro: #e88377;
+    --peligro-suave: #2e1a17;
+    --aviso: #d6a052;
+    --aviso-suave: #2f2412;
     --bien: #4dc1a6;
+    --bien-suave: #12302a;
+    --sombra: 0 1px 2px rgba(0, 0, 0, .4);
+    --sombra-flotante: 0 10px 30px -12px rgba(0, 0, 0, .8), 0 2px 8px rgba(0, 0, 0, .4);
     color-scheme: dark;
   }
 
   :root:not([data-tema="claro"])[data-app="consola"] {
-    --papel: #0f0e1c;
-    --superficie: #171630;
-    --superficie-2: #1f1d40;
+    --papel: #0d0c1a;
+    --superficie: #15142a;
+    --superficie-2: #1b1936;
+    --superficie-3: #211e40;
     --texto: #eceaff;
-    --texto-2: #b9b6e4;
-    --tenue: #8a87b8;
-    --borde: #2e2b57;
+    --texto-2: #b8b4e2;
+    --tenue: #8884b5;
+    --borde: #29254d;
+    --borde-fuerte: #3b3568;
     --marca: #9b90ff;
     --marca-fuerte: #b8b0ff;
     --marca-suave: #221f47;
-    --sobre-marca: #14113a;
+    --sobre-marca: #12103a;
+    --rail: #100e22;
+    --rail-2: #1a1738;
+    --rail-texto: #9b96c9;
+    --rail-texto-fuerte: #efedff;
+    --rail-activo: #241f4d;
+    --rail-borde: #241f4a;
     --bien: #9b90ff;
+    --bien-suave: #1d1a3d;
   }
+}
+
+:root[data-tema="oscuro"] {
+  --papel: #0b1615;
+  --superficie: #111f1d;
+  --superficie-2: #162825;
+  --superficie-3: #1b302c;
+  --texto: #e8efec;
+  --texto-2: #b3c6c1;
+  --tenue: #85a09a;
+  --borde: #233a36;
+  --borde-fuerte: #31504a;
+  --marca: #4dc1a6;
+  --marca-fuerte: #7fd8c1;
+  --marca-suave: #123029;
+  --sobre-marca: #05211c;
+  --rail: #0a1614;
+  --rail-2: #112421;
+  --rail-texto: #94aca7;
+  --rail-texto-fuerte: #eaf3f0;
+  --rail-activo: #17332d;
+  --rail-borde: #1c3531;
+  --peligro: #e88377;
+  --peligro-suave: #2e1a17;
+  --aviso: #d6a052;
+  --aviso-suave: #2f2412;
+  --bien: #4dc1a6;
+  --bien-suave: #12302a;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .4);
+  --sombra-flotante: 0 10px 30px -12px rgba(0, 0, 0, .8), 0 2px 8px rgba(0, 0, 0, .4);
+  color-scheme: dark;
+}
+
+:root[data-tema="oscuro"][data-app="consola"] {
+  --papel: #0d0c1a;
+  --superficie: #15142a;
+  --superficie-2: #1b1936;
+  --superficie-3: #211e40;
+  --texto: #eceaff;
+  --texto-2: #b8b4e2;
+  --tenue: #8884b5;
+  --borde: #29254d;
+  --borde-fuerte: #3b3568;
+  --marca: #9b90ff;
+  --marca-fuerte: #b8b0ff;
+  --marca-suave: #221f47;
+  --sobre-marca: #12103a;
+  --rail: #100e22;
+  --rail-2: #1a1738;
+  --rail-texto: #9b96c9;
+  --rail-texto-fuerte: #efedff;
+  --rail-activo: #241f4d;
+  --rail-borde: #241f4a;
+  --bien: #9b90ff;
+  --bien-suave: #1d1a3d;
 }
 
 * { box-sizing: border-box; }
@@ -87,16 +217,24 @@ body {
   background: var(--papel);
   color: var(--texto);
   font-family: var(--tipo);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: var(--t-base);
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 :focus-visible {
   outline: 2px solid var(--marca);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline-offset: 1px;
+  border-radius: var(--radio-menor);
 }
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.012em; }
+
+.mono { font-family: var(--tipo-mono); font-size: var(--t-menor); }
+.numerica { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tenue { color: var(--tenue); }
+.derecha, td.derecha, th.derecha { text-align: right; }
 
 .tarjeta {
   background: var(--superficie);
@@ -105,60 +243,135 @@ body {
   box-shadow: var(--sombra);
 }
 
-.campo { display: flex; flex-direction: column; gap: .3rem; }
-.campo label { font-size: .82rem; font-weight: 600; color: var(--texto-2); }
-.campo input {
+/* ---------------------------------------------------------------- campos -- */
+
+.campo { display: flex; flex-direction: column; gap: var(--e1); }
+
+.campo label,
+.campo > .etiqueta-campo {
+  font-size: var(--t-menor);
+  font-weight: 600;
+  color: var(--texto-2);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
   font: inherit;
+  font-size: var(--t-control);
   color: var(--texto);
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: .6rem .7rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-menor);
+  padding: 0 var(--e2);
+  height: var(--control);
   width: 100%;
 }
-.campo input:disabled { background: var(--superficie-2); color: var(--tenue); }
-.campo .error { color: var(--peligro); font-size: .82rem; }
-.campo[data-invalido="true"] input { border-color: var(--peligro); }
+
+.campo textarea { height: auto; padding: var(--e2); line-height: 1.5; }
+.campo input::placeholder { color: var(--tenue); }
+.campo input:disabled, .campo select:disabled { background: var(--superficie-3); color: var(--tenue); }
+.campo input:focus-visible, .campo select:focus-visible { border-color: var(--marca); }
+.campo .error { color: var(--peligro); font-size: var(--t-menor); font-weight: 500; }
+.campo[data-invalido="true"] input,
+.campo[data-invalido="true"] select { border-color: var(--peligro); }
+.campo .ayuda { color: var(--tenue); font-size: var(--t-menor); }
+
+/* --------------------------------------------------------------- botones -- */
 
 .boton {
   font: inherit;
+  font-size: var(--t-control);
   font-weight: 600;
   border: 1px solid transparent;
-  border-radius: var(--radio);
-  padding: .6rem 1rem;
+  border-radius: var(--radio-menor);
+  padding: 0 var(--e3);
+  height: var(--control);
   cursor: pointer;
   background: var(--marca);
   color: var(--sobre-marca);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
-  min-height: 42px;
+  gap: var(--e2);
+  white-space: nowrap;
 }
+
 .boton:hover:not(:disabled) { background: var(--marca-fuerte); }
-.boton:disabled { opacity: .6; cursor: progress; }
+.boton:disabled { opacity: .55; cursor: not-allowed; }
+.boton[data-cargando="true"] { cursor: progress; }
+
 .boton[data-variante="suave"] {
   background: var(--superficie);
   color: var(--texto);
-  border-color: var(--borde);
+  border-color: var(--borde-fuerte);
 }
-.boton[data-variante="suave"]:hover:not(:disabled) { background: var(--superficie-2); }
+.boton[data-variante="suave"]:hover:not(:disabled) { background: var(--superficie-2); border-color: var(--marca); }
+
+.boton[data-variante="peligro"] { background: var(--peligro); color: #fff; }
+.boton[data-variante="fantasma"] {
+  background: transparent;
+  color: var(--texto-2);
+  border-color: transparent;
+}
+.boton[data-variante="fantasma"]:hover:not(:disabled) { background: var(--superficie-3); color: var(--texto); }
+
+.boton-fila {
+  font: inherit;
+  font-size: var(--t-menor);
+  font-weight: 500;
+  color: var(--texto-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-menor);
+  padding: 0 var(--e2);
+  height: 1.625rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.boton-fila:hover { background: var(--superficie-3); color: var(--marca-fuerte); border-color: var(--borde); }
+
+/* --------------------------------------------------------------- avisos --- */
 
 .aviso {
+  display: flex;
+  gap: var(--e2);
+  align-items: flex-start;
   background: var(--peligro-suave);
   color: var(--peligro);
   border: 1px solid currentColor;
   border-radius: var(--radio);
-  padding: .6rem .75rem;
-  font-size: .9rem;
+  padding: var(--e2) var(--e3);
+  font-size: var(--t-base);
 }
 
+.aviso[data-tono="aviso"] { background: var(--aviso-suave); color: var(--aviso); }
+.aviso[data-tono="bien"] { background: var(--bien-suave); color: var(--bien); }
+
 .girador {
-  width: 15px; height: 15px;
+  width: 12px;
+  height: 12px;
   border: 2px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
   animation: girar .7s linear infinite;
+  flex: none;
 }
 @keyframes girar { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .girador { animation: none; } }
+
+/* ------------------------------------------------------------- etiquetas -- */
+
+.etiqueta {
+  display: inline-block;
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 1px var(--e1);
+  border-radius: var(--radio-menor);
+  background: var(--superficie-3);
+  color: var(--texto-2);
+}
+.etiqueta[data-tono="aviso"] { background: var(--peligro-suave); color: var(--peligro); }
+.etiqueta[data-tono="marca"] { background: var(--marca-suave); color: var(--marca-fuerte); }

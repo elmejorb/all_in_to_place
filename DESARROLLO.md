@@ -115,5 +115,9 @@ compartido entre peticiones.
   persistentes, hay que pasarlo a `SET LOCAL` dentro de una transacción.
 - **Las dos apps comparten `localhost`,** así que cada una usa su propio nombre
   de cookie de sesión y de CSRF. En producción irán en dominios distintos.
+- **La tipografía se carga de Google Fonts.** Antes de producción hay que
+  servirla desde el propio dominio: la política de seguridad de contenido
+  (SEG-25) no debería permitir un tercero, y una panadería con internet
+  intermitente vería la letra de respaldo.
 - **Redis todavía no está.** Colas y caché usan la base de datos mientras tanto;
   cambiar `QUEUE_CONNECTION` y `CACHE_STORE` cuando se instale.

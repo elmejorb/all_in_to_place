@@ -3,6 +3,7 @@
  * Uso: node api/tests/navegador/revisar-productos.mjs
  */
 import { chromium } from "playwright";
+import { entrar, irA, abrirEmpresas, salir } from "./_ayudas.mjs";
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -21,11 +22,8 @@ function revisar(descripcion, condicion) {
 
 const capturar = (pagina, nombre) => pagina.screenshot({ path: join(RAIZ, `${nombre}.png`), fullPage: true });
 
-async function entrar(pagina, email) {
-  await pagina.goto(EMPRESA, { waitUntil: "networkidle" });
-  await pagina.fill("#email", email);
-  await pagina.fill("#clave", CLAVE);
-  await pagina.click('button[type="submit"]');
+async function entrarYVerProductos(pagina, email) {
+  await entrar(pagina, email);
   await pagina.waitForSelector("table.tabla, .vacio-caja, .empresas");
 }
 
@@ -52,7 +50,7 @@ try {
   });
 
   // --- el propietario abre en Productos --------------------------------
-  await entrar(pagina, "pedro@elalamo.test");
+  await entrarYVerProductos(pagina, "pedro@elalamo.test");
   await pagina.waitForSelector("table.tabla");
   await capturar(pagina, "60-productos-listado");
 
@@ -166,9 +164,8 @@ try {
   revisar(`La existencia queda en lo contado (${existenciaPan})`, existenciaPan.startsWith("22"));
 
   // --- rol sin costos ---------------------------------------------------
-  await pagina.click("text=Cerrar sesión");
-  await pagina.waitForSelector("#email");
-  await entrar(pagina, "carmina@elalamo.test");   // empleado de almacén
+  await salir(pagina);
+  await entrarYVerProductos(pagina, "carmina@elalamo.test");   // empleado de almacén
   await pagina.waitForSelector("table.tabla");
   await capturar(pagina, "69-productos-almacen-sin-costos");
   const cabecerasAlmacen = (await pagina.locator("table.tabla thead").innerText()).toLowerCase();
@@ -185,7 +182,7 @@ try {
   // --- móvil -------------------------------------------------------------
   const movil = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const pmovil = await movil.newPage();
-  await entrar(pmovil, "pedro@elalamo.test");
+  await entrarYVerProductos(pmovil, "pedro@elalamo.test");
   await pmovil.waitForSelector("table.tabla");
   await capturar(pmovil, "70-productos-movil-390");
   const desborde = await pmovil.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
@@ -195,7 +192,7 @@ try {
   // --- tema oscuro --------------------------------------------------------
   const oscuro = await navegador.newContext({ viewport: { width: 1440, height: 950 }, colorScheme: "dark" });
   const poscuro = await oscuro.newPage();
-  await entrar(poscuro, "pedro@elalamo.test");
+  await entrarYVerProductos(poscuro, "pedro@elalamo.test");
   await poscuro.waitForSelector("table.tabla");
   await capturar(poscuro, "71-productos-tema-oscuro");
   revisar("La tabla se pinta con el tema oscuro", await poscuro.evaluate(() => getComputedStyle(document.querySelector("table.tabla")).backgroundColor) !== "rgb(255, 255, 255)");

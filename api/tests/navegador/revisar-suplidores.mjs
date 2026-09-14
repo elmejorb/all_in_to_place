@@ -7,6 +7,7 @@
  * Uso: node api/tests/navegador/revisar-suplidores.mjs
  */
 import { chromium } from "playwright";
+import { entrar, irA, abrirEmpresas, salir } from "./_ayudas.mjs";
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -27,16 +28,9 @@ async function capturar(pagina, nombre) {
   await pagina.screenshot({ path: join(RAIZ, `${nombre}.png`), fullPage: true });
 }
 
-async function entrar(pagina, email) {
-  await pagina.goto(EMPRESA, { waitUntil: "networkidle" });
-  await pagina.fill("#email", email);
-  await pagina.fill("#clave", CLAVE);
-  await pagina.click('button[type="submit"]');
-
-  // La app abre en Productos: hay que ir a Suplidores.
-  await pagina.waitForSelector("nav.nav, .vacio-caja, .error, .aviso");
-  const pestana = pagina.locator('nav.nav button:has-text("Suplidores")');
-  if (await pestana.count()) await pestana.click();
+async function entrarYVerSuplidores(pagina, email) {
+  await entrar(pagina, email);
+  await irA(pagina, 'Suplidores');
 }
 
 const navegador = await chromium.launch();
@@ -63,7 +57,7 @@ try {
   process.on("exit", volcar);
 
   // --- entra el propietario y cae en Suplidores ------------------------
-  await entrar(pagina, "pedro@elalamo.test");
+  await entrarYVerSuplidores(pagina, "pedro@elalamo.test");
   await pagina.waitForSelector("table.tabla");
   await capturar(pagina, "20-suplidores-listado");
 
@@ -134,9 +128,8 @@ try {
   revisar("Al desactivar sale de los activos y sigue existiendo", (await pagina.locator("table.tabla tbody").innerText()).includes("Prueba en Navegador"));
 
   // --- rol sin permiso de edición ---------------------------------------
-  await pagina.click("text=Cerrar sesión");
-  await pagina.waitForSelector("#email");
-  await entrar(pagina, "sonia@elalamo.test");
+  await salir(pagina);
+  await entrarYVerSuplidores(pagina, "sonia@elalamo.test");
   await pagina.waitForSelector("table.tabla");
   await capturar(pagina, "27-suplidores-contador-solo-lectura");
   revisar("El contador ve la tabla", (await pagina.locator("table.tabla tbody tr").count()) > 0);
@@ -144,12 +137,11 @@ try {
   revisar("El contador no ve el botón de editar", (await pagina.locator("text=Editar").count()) === 0);
 
   // --- rol sin acceso al módulo ------------------------------------------
-  await pagina.click("text=Cerrar sesión");
-  await pagina.waitForSelector("#email");
+  await salir(pagina);
   await entrar(pagina, "emily@elalamo.test");
   await pagina.waitForSelector(".empresas, .vacio-caja, table.tabla");
   await capturar(pagina, "28-empleado-mostrador-sin-modulo");
-  revisar("Al empleado de mostrador no se le ofrece Suplidores", (await pagina.locator('nav.nav button:text("Suplidores")').count()) === 0);
+  revisar("Al empleado de mostrador no se le ofrece Suplidores", (await pagina.locator('.rail__item:has-text("Suplidores")').count()) === 0);
 
   revisar("Sin errores de JavaScript", erroresJs.length === 0);
   if (erroresJs.length) console.log("   errores:", erroresJs.slice(0, 3));
@@ -157,7 +149,7 @@ try {
   // --- móvil -------------------------------------------------------------
   const movil = await navegador.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const pmovil = await movil.newPage();
-  await entrar(pmovil, "pedro@elalamo.test");
+  await entrarYVerSuplidores(pmovil, "pedro@elalamo.test");
   await pmovil.waitForSelector("table.tabla");
   await capturar(pmovil, "29-suplidores-movil-390");
   const desborde = await pmovil.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
@@ -167,7 +159,7 @@ try {
   // --- tema oscuro --------------------------------------------------------
   const oscuro = await navegador.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
   const poscuro = await oscuro.newPage();
-  await entrar(poscuro, "pedro@elalamo.test");
+  await entrarYVerSuplidores(poscuro, "pedro@elalamo.test");
   await poscuro.waitForSelector("table.tabla");
   await poscuro.click("text=Nuevo suplidor");
   await poscuro.waitForSelector('[role="dialog"]');

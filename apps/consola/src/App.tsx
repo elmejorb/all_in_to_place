@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Aviso, Boton, Campo } from "@aiop/ui";
+import { Aviso, Boton, Campo, InterruptorTema } from "@aiop/ui";
 import { api, ErrorApi, type Estado } from "./api";
 
 export function App() {
@@ -109,17 +109,20 @@ function Panel({ estado, alSalir }: { estado: Estado; alSalir: () => void }) {
   }
 
   return (
-    <main className="panel">
-      <header className="tarjeta barra">
-        <div className="barra__usuario">
+    <main className="contenido">
+      <header className="barra-superior">
+        <div className="celda-principal">
           <b>{estado.usuario?.nombres} {estado.usuario?.apellidos}</b>
-          <span>{estado.usuario?.email} · {estado.usuario?.rol}</span>
+          <small>{estado.usuario?.email} · {estado.usuario?.rol}</small>
         </div>
-        <Boton variante="suave" onClick={salir}>Cerrar sesión</Boton>
+        <div className="barra-superior__acciones">
+          <InterruptorTema />
+          <Boton variante="suave" onClick={salir}>Cerrar sesión</Boton>
+        </div>
       </header>
 
-      <section className="tarjeta bloque">
-        <h1 className="titulo">Consola en construcción</h1>
+      <section className="tarjeta" style={{ padding: "1rem 1.25rem" }}>
+        <h1 style={{ fontSize: "var(--t-medio)", marginBottom: "0.25rem" }}>Consola en construcción</h1>
         <p className="vacio sin-margen">
           Aquí van Empresas, Usuarios, Roles y Métodos de Pago. La sesión y el aislamiento ya están
           en pie: esta aplicación usa un rol de base de datos sin política sobre las tablas de
