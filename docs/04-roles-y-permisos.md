@@ -34,6 +34,8 @@ permite exigir un responsable por cuenta (`ROL-02`, `ADM-19`).
 | Invitar usuarios y cambiar roles | Sí | Limit. | No | No | No | No |
 | Crear y editar productos y precios | Sí | Sí | Sí | Limit. | No | No |
 | Recibir compras y ajustar existencias | Sí | Sí | Sí | Limit. | No | No |
+| Ver clientes | Sí | Sí | Sí | Limit. | Sí | Sí |
+| Crear y editar clientes | Sí | Sí | Sí | Limit. | No | No |
 | Emitir facturas y cobrar | Sí | Sí | Sí | Limit. | Limit. | No |
 | Anular factura o aplicar nota de crédito | Sí | Sí | Limit. | No | No | No |
 | Abrir y cerrar turno de caja | Sí | Sí | Sí | Limit. | No | No |
@@ -54,6 +56,8 @@ Aclaraciones de los `Limit.`:
   y datos logísticos; nunca el precio de venta.
 - **Empleado / existencias:** solo con perfil de almacén.
 - **Empleado / facturar:** solo con perfil de mostrador.
+- **Empleado / clientes:** solo con perfil de mostrador, porque sin clientes
+  no puede facturar a quien llega por primera vez (CLI-02).
 - **Empleado / caja:** abre y cierra su propio turno, no el de otros.
 - **Empleado y Contratista / reportes:** solo los de su propia actividad.
 - **Contratista / facturar:** solo documentos propios, y solo los ve él y sus

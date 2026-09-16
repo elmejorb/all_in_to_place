@@ -12,14 +12,27 @@ import {
 } from "@aiop/ui";
 import { api, ErrorApi, type EmpresaResumen, type Estado } from "./api";
 import { Categorias } from "./pantallas/Categorias";
+import { Clientes } from "./pantallas/Clientes";
 import { Productos } from "./pantallas/Productos";
 import { Suplidores } from "./pantallas/Suplidores";
 
-const MODULOS: Modulo[] = [
+const INVENTARIO: Modulo[] = [
   { clave: "productos", titulo: "Productos", icono: "▣", grupo: "Inventario" },
   { clave: "suplidores", titulo: "Suplidores", icono: "⛬", grupo: "Inventario" },
   { clave: "categorias", titulo: "Categorías", icono: "☰", grupo: "Inventario" },
 ];
+
+const VENTAS: Modulo[] = [
+  { clave: "clientes", titulo: "Clientes", icono: "☺", grupo: "Ventas" },
+];
+
+/** El menú muestra solo lo que el rol puede abrir (ROL-03 en la interfaz). */
+function modulosDe(permisos: string[]): Modulo[] {
+  return [
+    ...(permisos.includes("catalogo.ver") ? INVENTARIO : []),
+    ...(permisos.includes("clientes.ver") ? VENTAS : []),
+  ];
+}
 
 export function App() {
   return (
@@ -133,8 +146,10 @@ function Acceso({ alEntrar }: { alEntrar: (e: Estado) => void }) {
 
 function Aplicacion({ estado, alCambiar }: { estado: Estado; alCambiar: (e: Estado) => void }) {
   const activa = estado.empresa_activa ?? null;
-  const puedeVerCatalogo = activa?.permisos.includes("catalogo.ver") ?? false;
-  const [seccion, setSeccion] = useState(activa && puedeVerCatalogo ? "productos" : "empresas");
+  const permisos = activa?.permisos ?? [];
+  const puedeVerCatalogo = permisos.includes("catalogo.ver");
+  const modulos = modulosDe(permisos);
+  const [seccion, setSeccion] = useState(modulos[0]?.clave ?? "empresas");
   const avisar = useAvisar();
 
   async function salir() {
@@ -146,14 +161,14 @@ function Aplicacion({ estado, alCambiar }: { estado: Estado; alCambiar: (e: Esta
     if (empresa.id === activa?.id) return;
     const nuevo = await api.post<Estado>("/sesion/empresa", { empresa: empresa.id });
     alCambiar(nuevo);
-    setSeccion(nuevo.empresa_activa?.permisos.includes("catalogo.ver") ? "productos" : "empresas");
+    setSeccion(modulosDe(nuevo.empresa_activa?.permisos ?? [])[0]?.clave ?? "empresas");
     avisar(`Ahora estás trabajando en ${empresa.nombre}.`);
   }
 
   return (
     <Estructura
       marca="All in One Place"
-      modulos={puedeVerCatalogo ? MODULOS : []}
+      modulos={modulos}
       activo={seccion}
       alElegir={setSeccion}
       cabecera={
@@ -184,6 +199,8 @@ function Aplicacion({ estado, alCambiar }: { estado: Estado; alCambiar: (e: Esta
         <Suplidores soloLectura={activa.solo_lectura} />
       ) : seccion === "categorias" && activa && puedeVerCatalogo ? (
         <Categorias soloLectura={activa.solo_lectura} />
+      ) : seccion === "clientes" && activa && permisos.includes("clientes.ver") ? (
+        <Clientes soloLectura={activa.solo_lectura} />
       ) : (
         <PantallaEmpresas estado={estado} activa={activa} alElegir={elegirEmpresa} />
       )}

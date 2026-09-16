@@ -96,7 +96,7 @@ INV-09,Inventario,F2,05-app-empresa.md,"Fecha de vencimiento y lote para product
 INV-10,Inventario,F3,05-app-empresa.md,"Sugerencia de orden de compra por suplidor a partir de mínimos, ventas recientes y plazo de entrega."
 CLI-01,Clientes,MVP,05-app-empresa.md,"Ficha: nombre, tipo (persona o empresa), teléfono, correo, dirección, exención de impuesto con número de certificado, términos de pago, límite de crédito y notas."
 CLI-02,Clientes,MVP,05-app-empresa.md,"Creación al vuelo desde la pantalla de facturación, con solo el nombre y el teléfono como mínimo."
-CLI-03,Clientes,MVP,05-app-empresa.md,"Estado de cuenta: facturas, pagos, saldo pendiente y antigüedad de saldos (corriente, 30, 60, 90 o más días)."
+CLI-03,Clientes,MVP,05-app-empresa.md,"Estado de cuenta: facturas, pagos, saldo pendiente y antigüedad de saldos (corriente, 30, 60, 90 o más días). Entra con Facturación: sin documentos no hay cuenta que mostrar."
 CLI-04,Clientes,F2,05-app-empresa.md,"Aviso de posible duplicado al capturar un cliente con teléfono o nombre parecido a otro existente."
 CLI-05,Clientes,F3,05-app-empresa.md,"Fusionar dos clientes conservando su historial."
 FAC-01,Facturacion,MVP,05-app-empresa.md,"Flujo cotización a factura a pago, con el enlace entre documentos siempre visible."

@@ -106,7 +106,7 @@ Los once módulos funcionales de la aplicación que usan las empresas.
 |---|---|---|
 | CLI-01 | MVP | Ficha: nombre, tipo (persona o empresa), teléfono, correo, dirección, exención de impuesto con número de certificado, términos de pago, límite de crédito y notas. |
 | CLI-02 | MVP | Creación al vuelo desde la pantalla de facturación, con solo el nombre y el teléfono como mínimo. |
-| CLI-03 | MVP | Estado de cuenta: facturas, pagos, saldo pendiente y antigüedad de saldos (corriente, 30, 60, 90 o más días). |
+| CLI-03 | MVP | Estado de cuenta: facturas, pagos, saldo pendiente y antigüedad de saldos (corriente, 30, 60, 90 o más días). Entra con Facturación: sin documentos no hay cuenta que mostrar. |
 | CLI-04 | F2 | Aviso de posible duplicado al capturar un cliente con teléfono o nombre parecido a otro existente. |
 | CLI-05 | F3 | Fusionar dos clientes conservando su historial. |
 

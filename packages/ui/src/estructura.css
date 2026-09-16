@@ -688,3 +688,21 @@ table.tabla--previa td { vertical-align: top; padding-top: var(--e2); padding-bo
 
 .errores-fila { margin: var(--e1) 0 0; padding-left: var(--e3); color: var(--peligro); font-size: var(--t-menor); }
 .errores-fila li { margin-bottom: 2px; }
+
+/* Casilla dentro de la barra de filtros. */
+.filtro-casilla {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--t-control);
+  color: var(--texto-2);
+  padding: 0 var(--e2);
+  height: var(--control);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-menor);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filtro-casilla:hover { border-color: var(--marca); }
+
+.etiquetas-fila { display: flex; gap: var(--e1); flex-wrap: wrap; margin-top: 2px; }

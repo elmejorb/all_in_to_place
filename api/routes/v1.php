@@ -3,6 +3,7 @@
 use App\Http\Middleware\ExigirEmpresa;
 use App\Http\Middleware\ExigirPermiso;
 use App\Http\V1\Controllers\CategoriaController;
+use App\Http\V1\Controllers\ClienteController;
 use App\Http\V1\Controllers\ImportacionProductoController;
 use App\Http\V1\Controllers\ProductoController;
 use App\Http\V1\Controllers\SesionController;
@@ -46,6 +47,21 @@ Route::middleware('auth:empresa')->group(function () {
         Route::middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_EDITAR)->group(function () {
             Route::post('categorias', [CategoriaController::class, 'store'])->name('v1.categorias.store');
             Route::put('categorias/{categoria}', [CategoriaController::class, 'update'])->name('v1.categorias.update');
+        });
+
+        // --- clientes (CLI-01, CLI-02) ---
+        Route::get('clientes', [ClienteController::class, 'index'])
+            ->middleware(ExigirPermiso::class.':'.Permisos::CLIENTES_VER)
+            ->name('v1.clientes.index');
+
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CLIENTES_EDITAR)->group(function () {
+            Route::post('clientes', [ClienteController::class, 'store'])->name('v1.clientes.store');
+            Route::put('clientes/{cliente}', [ClienteController::class, 'update'])->name('v1.clientes.update');
+        });
+
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_DESACTIVAR)->group(function () {
+            Route::post('clientes/{cliente}/desactivar', [ClienteController::class, 'desactivar'])->name('v1.clientes.desactivar');
+            Route::post('clientes/{cliente}/reactivar', [ClienteController::class, 'reactivar'])->name('v1.clientes.reactivar');
         });
 
         Route::get('productos', [ProductoController::class, 'index'])

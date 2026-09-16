@@ -236,3 +236,22 @@ export type Importacion = {
   puede_aplicarse: boolean;
   filas: FilaImportada[];
 };
+
+export type Cliente = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  identificacion: string | null;
+  telefono: string | null;
+  email: string | null;
+  direccion: string | null;
+  exento: boolean;
+  certificado_exencion: string | null;
+  terminos_pago: string | null;
+  limite_credito: string;
+  tiene_credito: boolean;
+  notas: string | null;
+  activo: boolean;
+};
+
+export type ListadoClientes = Listado<Cliente> & { tipos: string[] };

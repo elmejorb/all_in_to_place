@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Domain\Precio;
 use App\Models\Categoria;
+use App\Models\Cliente;
 use App\Models\Empresa;
 use App\Models\Producto;
 use App\Models\Membresia;
@@ -202,6 +203,29 @@ class DatabaseSeeder extends Seeder
             ['Resma de papel carta', 'PAP-001', null, 'Papelería', 'Papelería Planeta', 'caja', '12000', '18000', '19', 15, 5, false],
         ]);
 
+        $this->clientes($alamo->id, [
+            // nombre, tipo, identificacion, telefono, email, exento, certificado, terminos, credito
+            ['Cafetería La Esquina', 'empresa', '660-12-3456', '787-555-2020', 'pedidos@laesquina.test', false, null, '15 dias', '500.00'],
+            ['Colegio San Antonio', 'empresa', '660-98-7654', '787-555-3030', 'compras@sanantonio.test', true, 'EXE-2024-114', '30 dias', '1500.00'],
+            ['María Fernández', 'persona', null, '787-555-4040', null, false, null, null, '0'],
+            ['José Rolón', 'persona', null, '787-555-5050', 'jrolon@correo.test', false, null, 'contado', '0'],
+            ['Hotel Bayamón Plaza', 'empresa', '660-44-5566', '787-555-6060', null, false, null, '30 dias', '3000.00'],
+            ['Cliente Antiguo Inactivo', 'persona', null, null, null, false, null, null, '0'],
+        ]);
+
+        Cliente::withoutGlobalScope('empresa')
+            ->where('empresa_id', $alamo->id)
+            ->where('nombre', 'Cliente Antiguo Inactivo')
+            ->update(['activo' => false]);
+
+        $this->clientes($santaMonica->id, [
+            ['Panadería vecina', 'empresa', null, '787-555-7070', null, false, null, null, '0'],
+        ]);
+
+        $this->clientes($innovacion->id, [
+            ['Alcaldía de Planeta Rica', 'empresa', '900123456-7', '300-555-8080', null, true, 'RES-2024-9', '30 dias', '10000.00'],
+        ]);
+
         // Consola de plataforma: otro ámbito, otra tabla (ARQ-03).
         UsuarioPlataforma::create([
             'nombres' => 'Laura',
@@ -220,6 +244,25 @@ class DatabaseSeeder extends Seeder
             'rol' => 'soporte',
             'activo' => true,
         ]);
+    }
+
+    private function clientes(int $empresaId, array $filas): void
+    {
+        foreach ($filas as [$nombre, $tipo, $identificacion, $telefono, $email, $exento, $certificado, $terminos, $credito]) {
+            Cliente::withoutGlobalScope('empresa')->create([
+                'empresa_id' => $empresaId,
+                'nombre' => $nombre,
+                'tipo' => $tipo,
+                'identificacion' => $identificacion,
+                'telefono' => $telefono,
+                'email' => $email,
+                'exento' => $exento,
+                'certificado_exencion' => $certificado,
+                'terminos_pago' => $terminos,
+                'limite_credito_centavos' => Precio::aCentavos($credito) ?? 0,
+                'activo' => true,
+            ]);
+        }
     }
 
     /** Crea productos y su existencia de apertura como movimiento (INV-01). */

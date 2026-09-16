@@ -17,6 +17,11 @@ final class Permisos
     public const CATALOGO_EDITAR = 'catalogo.editar';
     public const CATALOGO_DESACTIVAR = 'catalogo.desactivar';
 
+    // Clientes. El de mostrador los necesita para facturar, así que crea al
+    // vuelo (CLI-02), pero no administra su crédito ni su exención.
+    public const CLIENTES_VER = 'clientes.ver';
+    public const CLIENTES_EDITAR = 'clientes.editar';
+
     // Costos y márgenes: no todos los roles ven lo que cuesta la mercancía.
     public const COSTOS_VER = 'costos.ver';
 
@@ -27,27 +32,38 @@ final class Permisos
     private const MATRIZ = [
         'propietario' => [
             self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
+            self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::COSTOS_VER, self::EMPRESA_CONFIGURAR, self::USUARIOS_GESTIONAR,
         ],
         'administrador' => [
             self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
+            self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::COSTOS_VER, self::USUARIOS_GESTIONAR,
         ],
         'gerente' => [
-            self::CATALOGO_VER, self::CATALOGO_EDITAR, self::COSTOS_VER,
+            self::CATALOGO_VER, self::CATALOGO_EDITAR,
+            self::CLIENTES_VER, self::CLIENTES_EDITAR,
+            self::COSTOS_VER,
         ],
-        // El empleado de almacén ve el catálogo; el de mostrador no entra aquí.
+        // El de almacén ve el catálogo; el de mostrador ve y crea clientes,
+        // porque sin eso no puede facturar (ROL-08, CLI-02).
         'empleado' => [
             self::CATALOGO_VER,
+            self::CLIENTES_VER, self::CLIENTES_EDITAR,
         ],
-        'contratista' => [],
+        'contratista' => [
+            self::CLIENTES_VER,
+        ],
         'contador' => [
-            self::CATALOGO_VER, self::COSTOS_VER,
+            self::CATALOGO_VER, self::CLIENTES_VER, self::COSTOS_VER,
         ],
     ];
 
     /** Permisos que solo tiene el empleado con perfil de almacén (ROL-08). */
     private const SOLO_ALMACEN = [self::CATALOGO_VER];
+
+    /** Y los que solo tiene el de mostrador. */
+    private const SOLO_MOSTRADOR = [self::CLIENTES_VER, self::CLIENTES_EDITAR];
 
     public static function permite(?Membresia $membresia, string $permiso): bool
     {
@@ -63,6 +79,10 @@ final class Permisos
 
         if ($membresia->rol === 'empleado' && in_array($permiso, self::SOLO_ALMACEN, true)) {
             return $membresia->perfil === 'almacen';
+        }
+
+        if ($membresia->rol === 'empleado' && in_array($permiso, self::SOLO_MOSTRADOR, true)) {
+            return $membresia->perfil === 'mostrador';
         }
 
         return true;
