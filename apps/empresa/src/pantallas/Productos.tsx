@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Aviso, Boton, Campo, PanelLateral } from "@aiop/ui";
+import { Aviso, Boton, Campo, PanelLateral, useAvisar } from "@aiop/ui";
+import { ImportarProductos } from "./ImportarProductos";
 import {
   api,
+  descargar,
   ErrorApi,
   type Categoria,
   type ListadoProductos,
@@ -49,6 +51,8 @@ export function Productos({ soloLectura }: { soloLectura: boolean }) {
   const [editando, setEditando] = useState<Producto | null>(null);
   const [ajustando, setAjustando] = useState<Producto | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  const [importando, setImportando] = useState(false);
+  const avisar = useAvisar();
 
   // Catálogos para los filtros y el formulario.
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -105,6 +109,22 @@ export function Productos({ soloLectura }: { soloLectura: boolean }) {
     setEstado("activos");
   }
 
+  async function exportar() {
+    const p = new URLSearchParams({ estado });
+    if (buscar.trim()) p.set("buscar", buscar.trim());
+    if (categoria) p.set("categoria", categoria);
+    if (suplidor) p.set("suplidor", suplidor);
+    if (existencia) p.set("existencia", existencia);
+    if (tipo) p.set("tipo", tipo);
+
+    try {
+      await descargar(`/productos/exportar?${p}`);
+      avisar("Exportado con los filtros que tienes puestos.");
+    } catch (e) {
+      setFallo((e as ErrorApi).message);
+    }
+  }
+
   async function cambiarActivo(producto: Producto) {
     const accion = producto.activo ? "desactivar" : "reactivar";
     if (producto.activo && !window.confirm(`¿Desactivar ${producto.nombre}? Dejará de aparecer al facturar, pero conserva su historial.`)) {
@@ -126,7 +146,13 @@ export function Productos({ soloLectura }: { soloLectura: boolean }) {
           <h1>Productos</h1>
           <p>Tu catálogo, con lo que cuesta, a cuánto se vende y cuánto queda.</p>
         </div>
-        {puedeEditar && <Boton onClick={() => setEditando({ ...VACIO })}>Nuevo producto</Boton>}
+        <div className="pantalla__acciones">
+          <Boton variante="suave" onClick={() => void exportar()}>Exportar</Boton>
+          {puedeEditar && (
+            <Boton variante="suave" onClick={() => setImportando(true)}>Importar</Boton>
+          )}
+          {puedeEditar && <Boton onClick={() => setEditando({ ...VACIO })}>Nuevo producto</Boton>}
+        </div>
       </div>
 
       <div className="filtros">
@@ -301,6 +327,16 @@ export function Productos({ soloLectura }: { soloLectura: boolean }) {
           alCerrar={() => setEditando(null)}
           alGuardar={async () => {
             setEditando(null);
+            setCursor(null);
+            await cargar();
+          }}
+        />
+      )}
+
+      {importando && (
+        <ImportarProductos
+          alCerrar={() => setImportando(false)}
+          alTerminar={async () => {
             setCursor(null);
             await cargar();
           }}

@@ -83,6 +83,54 @@ export function crearCliente(prefijo: string, cookieCsrf: string) {
       pedir<T>(ruta, { method: "PUT", body: JSON.stringify(datos ?? {}) }),
     borrar: <T>(ruta: string, datos?: unknown) =>
       pedir<T>(ruta, { method: "DELETE", body: datos ? JSON.stringify(datos) : undefined }),
+
+    /** Envía un archivo. No lleva Content-Type: lo pone el navegador con su frontera. */
+    subir: async <T>(ruta: string, cuerpo: FormData): Promise<T> => {
+      await asegurarCsrf();
+
+      const respuesta = await fetch(`${BASE}${prefijo}${ruta}`, {
+        method: "POST",
+        credentials: "include",
+        body: cuerpo,
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-XSRF-TOKEN": tokenCsrf(cookieCsrf),
+        },
+      });
+
+      const datos = await respuesta.json().catch(() => ({}));
+
+      if (!respuesta.ok) {
+        throw new ErrorApi(respuesta.status, datos.errors ?? {}, datos.message ?? "No se pudo subir el archivo.");
+      }
+
+      return datos as T;
+    },
+
+    /** Descarga un archivo del servidor conservando el nombre que este propone. */
+    descargar: async (ruta: string): Promise<void> => {
+      const respuesta = await fetch(`${BASE}${prefijo}${ruta}`, {
+        credentials: "include",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+
+      if (!respuesta.ok) {
+        const datos = await respuesta.json().catch(() => ({}));
+        throw new ErrorApi(respuesta.status, datos.errors ?? {}, datos.message ?? "No se pudo descargar el archivo.");
+      }
+
+      const nombre = respuesta.headers.get("X-Nombre-Archivo") ?? "archivo.csv";
+      const contenido = await respuesta.blob();
+      const url = URL.createObjectURL(contenido);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = nombre;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    },
   };
 }
 
@@ -164,4 +212,27 @@ export type ListadoProductos = Listado<Producto> & {
   unidades: string[];
   motivos_ajuste: string[];
   permisos: { editar: boolean; desactivar: boolean; ver_costos: boolean };
+};
+
+export const descargar = (ruta: string) => api.descargar(ruta);
+
+export type FilaImportada = {
+  numero: number;
+  accion: "nuevo" | "actualiza" | "error";
+  nombre: string;
+  sku: string | null;
+  errores: string[];
+};
+
+export type Importacion = {
+  id: string;
+  archivo: string;
+  estado: string;
+  actualizar_existentes: boolean;
+  total: number;
+  nuevas: number;
+  actualiza: number;
+  errores: number;
+  puede_aplicarse: boolean;
+  filas: FilaImportada[];
 };

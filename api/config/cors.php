@@ -13,7 +13,9 @@ return [
     ]),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'X-XSRF-TOKEN', 'Accept'],
-    'exposed_headers' => [],
+    // Sin exponerla, el navegador no puede leerla y toda descarga se llamaría
+    // 'archivo.csv' (SEG-27).
+    'exposed_headers' => ['X-Nombre-Archivo'],
     'max_age' => 3600,
     'supports_credentials' => true,
 ];

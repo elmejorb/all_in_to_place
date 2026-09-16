@@ -3,6 +3,7 @@
 use App\Http\Middleware\ExigirEmpresa;
 use App\Http\Middleware\ExigirPermiso;
 use App\Http\V1\Controllers\CategoriaController;
+use App\Http\V1\Controllers\ImportacionProductoController;
 use App\Http\V1\Controllers\ProductoController;
 use App\Http\V1\Controllers\SesionController;
 use App\Http\V1\Controllers\SuplidorController;
@@ -54,6 +55,19 @@ Route::middleware('auth:empresa')->group(function () {
         Route::get('productos/{producto}/movimientos', [ProductoController::class, 'movimientos'])
             ->middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_VER)
             ->name('v1.productos.movimientos');
+
+        // Importar y exportar el catálogo (PRO-07, PRO-08, PRO-09).
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_VER)->group(function () {
+            Route::get('productos/plantilla', [ImportacionProductoController::class, 'plantilla'])->name('v1.productos.plantilla');
+            Route::get('productos/exportar', [ImportacionProductoController::class, 'exportar'])->name('v1.productos.exportar');
+            Route::get('importaciones/{importacion}/errores', [ImportacionProductoController::class, 'errores'])->name('v1.importaciones.errores');
+        });
+
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_EDITAR)->group(function () {
+            Route::post('productos/importar', [ImportacionProductoController::class, 'previsualizar'])->name('v1.productos.importar');
+            Route::post('importaciones/{importacion}/confirmar', [ImportacionProductoController::class, 'confirmar'])->name('v1.importaciones.confirmar');
+            Route::post('importaciones/{importacion}/descartar', [ImportacionProductoController::class, 'descartar'])->name('v1.importaciones.descartar');
+        });
 
         Route::middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_EDITAR)->group(function () {
             Route::post('productos', [ProductoController::class, 'store'])->name('v1.productos.store');

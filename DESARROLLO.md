@@ -91,6 +91,7 @@ node api/tests/navegador/revisar-acceso.mjs       # acceso y cambio de empresa
 node api/tests/navegador/revisar-suplidores.mjs   # catálogo de suplidores
 node api/tests/navegador/revisar-categorias.mjs   # categorías, etiquetas y borrado
 node api/tests/navegador/revisar-productos.mjs    # catálogo, márgenes y ajustes
+node api/tests/navegador/revisar-importacion.mjs  # importar y exportar por CSV
 ```
 
 Las capturas quedan en `api/tests/navegador/capturas/`. Son la evidencia que pide
@@ -106,6 +107,10 @@ producción. Si algo pasa en pruebas y falla en el navegador, sospecha de estado
 compartido entre peticiones.
 
 ## Cosas que conviene saber
+
+- **La importación es por CSV, no por XLSX todavía.** El archivo se escribe con
+  punto y coma y BOM, que es lo que Excel en español abre de un doble clic. El
+  XLSX nativo entra cuando se agregue la librería de hojas de cálculo.
 
 - **Las migraciones no corren con el usuario de la aplicación.** Si se olvida
   `--database=pgsql_migrator`, fallan con "permiso denegado al esquema public".
