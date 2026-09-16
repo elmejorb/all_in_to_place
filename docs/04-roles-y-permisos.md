@@ -55,7 +55,8 @@ Aclaraciones de los `Limit.`:
 - **Empleado / productos:** con perfil de almacén edita costo, existencia mínima
   y datos logísticos; nunca el precio de venta.
 - **Empleado / existencias:** solo con perfil de almacén.
-- **Empleado / facturar:** solo con perfil de mostrador.
+- **Empleado / facturar:** solo con perfil de mostrador. Vende, pero no anula
+  una venta ya emitida.
 - **Empleado / clientes:** solo con perfil de mostrador, porque sin clientes
   no puede facturar a quien llega por primera vez (CLI-02).
 - **Empleado / caja:** abre y cierra su propio turno, no el de otros.

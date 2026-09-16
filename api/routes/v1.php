@@ -4,6 +4,7 @@ use App\Http\Middleware\ExigirEmpresa;
 use App\Http\Middleware\ExigirPermiso;
 use App\Http\V1\Controllers\CategoriaController;
 use App\Http\V1\Controllers\ClienteController;
+use App\Http\V1\Controllers\FacturaController;
 use App\Http\V1\Controllers\ImportacionProductoController;
 use App\Http\V1\Controllers\ProductoController;
 use App\Http\V1\Controllers\SesionController;
@@ -48,6 +49,19 @@ Route::middleware('auth:empresa')->group(function () {
             Route::post('categorias', [CategoriaController::class, 'store'])->name('v1.categorias.store');
             Route::put('categorias/{categoria}', [CategoriaController::class, 'update'])->name('v1.categorias.update');
         });
+
+        // --- facturación (FAC-01 a FAC-09) ---
+        Route::middleware(ExigirPermiso::class.':'.Permisos::FACTURAR)->group(function () {
+            Route::get('facturas', [FacturaController::class, 'index'])->name('v1.facturas.index');
+            Route::get('facturas/{documento}', [FacturaController::class, 'ver'])->name('v1.facturas.ver');
+            Route::post('facturas/calcular', [FacturaController::class, 'calcular'])->name('v1.facturas.calcular');
+            Route::post('facturas', [FacturaController::class, 'emitir'])->name('v1.facturas.emitir');
+            Route::post('facturas/{documento}/cobrar', [FacturaController::class, 'cobrar'])->name('v1.facturas.cobrar');
+        });
+
+        Route::post('facturas/{documento}/anular', [FacturaController::class, 'anular'])
+            ->middleware(ExigirPermiso::class.':'.Permisos::FACTURAS_ANULAR)
+            ->name('v1.facturas.anular');
 
         // --- clientes (CLI-01, CLI-02) ---
         Route::get('clientes', [ClienteController::class, 'index'])

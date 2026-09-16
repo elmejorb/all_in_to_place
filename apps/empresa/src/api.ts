@@ -11,8 +11,19 @@ export class ErrorApi extends Error {
     public estado: number,
     public errores: Record<string, string[]> = {},
     mensaje = "Algo salió mal.",
+    /**
+     * El cuerpo completo de la respuesta. Muchas respuestas traen más que un
+     * mensaje —un código, o la lista de lo que falta en existencia— y sin esto
+     * la pantalla no puede usarlo.
+     */
+    public cuerpo: Record<string, unknown> = {},
   ) {
     super(mensaje);
+  }
+
+  /** El código que da el servidor para distinguir un caso de otro. */
+  get codigo(): string | undefined {
+    return typeof this.cuerpo.codigo === "string" ? this.cuerpo.codigo : undefined;
   }
 
   /** Primer error de un campo, para mostrarlo junto a él. */
@@ -31,7 +42,7 @@ export class ErrorApi extends Error {
     const { [nombre]: _quitado, ...resto } = this.errores;
     if (Object.keys(resto).length === 0) return null;
 
-    return new ErrorApi(this.estado, resto, this.message);
+    return new ErrorApi(this.estado, resto, this.message, this.cuerpo);
   }
 }
 
@@ -69,6 +80,7 @@ export function crearCliente(prefijo: string, cookieCsrf: string) {
         respuesta.status,
         cuerpo.errors ?? {},
         cuerpo.message ?? "No se pudo completar la operación.",
+        cuerpo,
       );
     }
 
@@ -102,7 +114,7 @@ export function crearCliente(prefijo: string, cookieCsrf: string) {
       const datos = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok) {
-        throw new ErrorApi(respuesta.status, datos.errors ?? {}, datos.message ?? "No se pudo subir el archivo.");
+        throw new ErrorApi(respuesta.status, datos.errors ?? {}, datos.message ?? "No se pudo subir el archivo.", datos);
       }
 
       return datos as T;
@@ -255,3 +267,58 @@ export type Cliente = {
 };
 
 export type ListadoClientes = Listado<Cliente> & { tipos: string[] };
+
+export type Calculo = {
+  subtotal: string;
+  descuento: string;
+  base: string;
+  impuesto: string;
+  total: string;
+  desglose: { nombre: string; monto: string }[];
+};
+
+export type FacturaResumen = {
+  id: string;
+  folio: string | null;
+  estado: string;
+  cliente: string | null;
+  emitida_en: string | null;
+  vence_el: string | null;
+  total: string;
+  pagado: string;
+  saldo: string;
+};
+
+export type FacturaDetalle = FacturaResumen & {
+  subtotal: string;
+  descuento: string;
+  base: string;
+  impuesto: string;
+  desglose: { nombre: string; monto: string }[];
+  cliente_exento: boolean;
+  terminos_pago: string | null;
+  notas: string | null;
+  motivo_anulacion: string | null;
+  emitida_por: string | null;
+  renglones: {
+    id: string;
+    descripcion: string;
+    sku: string | null;
+    cantidad: number;
+    unidad: string;
+    precio: string;
+    descuento: string;
+    impuesto: string;
+    total: string;
+  }[];
+  pagos: { id: string; metodo: string; monto: string; cambio: string; referencia: string | null; fecha: string | null }[];
+};
+
+export type ListadoFacturas = {
+  datos: FacturaResumen[];
+  siguiente: string | null;
+  anterior: string | null;
+  resumen: { cantidad: number; total: string; pagado: string; por_cobrar: string };
+  metodos_pago: string[];
+  permisos: { facturar: boolean; anular: boolean };
+};

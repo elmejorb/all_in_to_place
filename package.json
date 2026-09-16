@@ -12,7 +12,7 @@
     "db:fresh": "php api/artisan migrate:fresh --database=pgsql_migrator --force && php api/artisan db:seed --force",
     "build": "pnpm -r build",
     "test:api": "php api/artisan test",
-    "test:navegador": "node api/tests/navegador/revisar-acceso.mjs && node api/tests/navegador/revisar-suplidores.mjs && node api/tests/navegador/revisar-categorias.mjs && node api/tests/navegador/revisar-productos.mjs && node api/tests/navegador/revisar-importacion.mjs && node api/tests/navegador/revisar-clientes.mjs"
+    "test:navegador": "node api/tests/navegador/revisar-acceso.mjs && node api/tests/navegador/revisar-suplidores.mjs && node api/tests/navegador/revisar-categorias.mjs && node api/tests/navegador/revisar-productos.mjs && node api/tests/navegador/revisar-importacion.mjs && node api/tests/navegador/revisar-clientes.mjs && node api/tests/navegador/revisar-facturacion.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

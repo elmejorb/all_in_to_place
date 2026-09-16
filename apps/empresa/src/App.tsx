@@ -13,6 +13,7 @@ import {
 import { api, ErrorApi, type EmpresaResumen, type Estado } from "./api";
 import { Categorias } from "./pantallas/Categorias";
 import { Clientes } from "./pantallas/Clientes";
+import { Facturas } from "./pantallas/Facturas";
 import { Productos } from "./pantallas/Productos";
 import { Suplidores } from "./pantallas/Suplidores";
 
@@ -23,14 +24,19 @@ const INVENTARIO: Modulo[] = [
 ];
 
 const VENTAS: Modulo[] = [
+  { clave: "facturas", titulo: "Facturas", icono: "▤", grupo: "Ventas" },
   { clave: "clientes", titulo: "Clientes", icono: "☺", grupo: "Ventas" },
 ];
 
 /** El menú muestra solo lo que el rol puede abrir (ROL-03 en la interfaz). */
 function modulosDe(permisos: string[]): Modulo[] {
+  const ventas = VENTAS.filter((m) =>
+    m.clave === "facturas" ? permisos.includes("facturas.emitir") : permisos.includes("clientes.ver"),
+  );
+
   return [
     ...(permisos.includes("catalogo.ver") ? INVENTARIO : []),
-    ...(permisos.includes("clientes.ver") ? VENTAS : []),
+    ...ventas,
   ];
 }
 
@@ -201,6 +207,8 @@ function Aplicacion({ estado, alCambiar }: { estado: Estado; alCambiar: (e: Esta
         <Categorias soloLectura={activa.solo_lectura} />
       ) : seccion === "clientes" && activa && permisos.includes("clientes.ver") ? (
         <Clientes soloLectura={activa.solo_lectura} />
+      ) : seccion === "facturas" && activa && permisos.includes("facturas.emitir") ? (
+        <Facturas soloLectura={activa.solo_lectura} />
       ) : (
         <PantallaEmpresas estado={estado} activa={activa} alElegir={elegirEmpresa} />
       )}

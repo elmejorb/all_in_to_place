@@ -107,6 +107,13 @@ export async function cambiarEmpresa(pagina, nombre) {
 }
 
 export async function salir(pagina) {
+  // Un panel lateral abierto tapa la barra con su velo: primero se cierra.
+  const cerrarPanel = pagina.locator(".panel-lateral__cerrar");
+  if (await cerrarPanel.count()) {
+    await cerrarPanel.first().click();
+    await pagina.waitForSelector(".panel-lateral", { state: "detached" });
+  }
+
   await pagina.locator(".barra-superior__acciones .desplegable__boton").click();
   await pagina.click("text=Cerrar sesión");
   await pagina.waitForSelector("#email");

@@ -58,6 +58,21 @@ final class Precio
         return (int) round(((float) $texto) * 100);
     }
 
+    /**
+     * Como aCentavos, pero para dinero que no puede quedar en nada: si el texto
+     * no es un número, revienta en vez de guardar un cero silencioso.
+     */
+    public static function monto(string|int|float|null $valor): int
+    {
+        $centavos = self::aCentavos($valor);
+
+        if ($centavos === null) {
+            throw new \InvalidArgumentException('Importe inválido: '.var_export($valor, true));
+        }
+
+        return $centavos;
+    }
+
     /** Centavos a texto con dos decimales, para mostrar y para exportar. */
     public static function aTexto(int $centavos): string
     {

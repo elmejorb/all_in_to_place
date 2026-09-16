@@ -93,6 +93,7 @@ node api/tests/navegador/revisar-categorias.mjs   # categorías, etiquetas y bor
 node api/tests/navegador/revisar-productos.mjs    # catálogo, márgenes y ajustes
 node api/tests/navegador/revisar-importacion.mjs  # importar y exportar por CSV
 node api/tests/navegador/revisar-clientes.mjs     # clientes, exención y crédito
+node api/tests/navegador/revisar-facturacion.mjs  # vender, cobrar y anular
 ```
 
 Las capturas quedan en `api/tests/navegador/capturas/`. Son la evidencia que pide

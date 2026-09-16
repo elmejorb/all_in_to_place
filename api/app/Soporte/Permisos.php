@@ -22,6 +22,11 @@ final class Permisos
     public const CLIENTES_VER = 'clientes.ver';
     public const CLIENTES_EDITAR = 'clientes.editar';
 
+    // Facturación. Anular es aparte de facturar: el cajero vende, pero no
+    // deshace una venta ya emitida (matriz del documento 04).
+    public const FACTURAR = 'facturas.emitir';
+    public const FACTURAS_ANULAR = 'facturas.anular';
+
     // Costos y márgenes: no todos los roles ven lo que cuesta la mercancía.
     public const COSTOS_VER = 'costos.ver';
 
@@ -33,23 +38,26 @@ final class Permisos
         'propietario' => [
             self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
+            self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER, self::EMPRESA_CONFIGURAR, self::USUARIOS_GESTIONAR,
         ],
         'administrador' => [
             self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
+            self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER, self::USUARIOS_GESTIONAR,
         ],
         'gerente' => [
             self::CATALOGO_VER, self::CATALOGO_EDITAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
+            self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER,
         ],
         // El de almacén ve el catálogo; el de mostrador ve y crea clientes,
         // porque sin eso no puede facturar (ROL-08, CLI-02).
         'empleado' => [
             self::CATALOGO_VER,
-            self::CLIENTES_VER, self::CLIENTES_EDITAR,
+            self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR,
         ],
         'contratista' => [
             self::CLIENTES_VER,
@@ -63,7 +71,7 @@ final class Permisos
     private const SOLO_ALMACEN = [self::CATALOGO_VER];
 
     /** Y los que solo tiene el de mostrador. */
-    private const SOLO_MOSTRADOR = [self::CLIENTES_VER, self::CLIENTES_EDITAR];
+    private const SOLO_MOSTRADOR = [self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR];
 
     public static function permite(?Membresia $membresia, string $permiso): bool
     {

@@ -706,3 +706,53 @@ table.tabla--previa td { vertical-align: top; padding-top: var(--e2); padding-bo
 .filtro-casilla:hover { border-color: var(--marca); }
 
 .etiquetas-fila { display: flex; gap: var(--e1); flex-wrap: wrap; margin-top: 2px; }
+
+/* --- facturación --------------------------------------------------------- */
+
+.renglones { display: flex; flex-direction: column; gap: var(--e3); }
+
+.renglon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie-2);
+}
+
+.renglon__cifras { display: grid; grid-template-columns: 1fr 1fr auto; gap: var(--e2); align-items: end; }
+.renglon__quitar { height: var(--control); }
+
+.cobro { display: flex; flex-direction: column; gap: var(--e3); }
+
+.totales { margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.totales div { display: flex; justify-content: space-between; gap: var(--e4); font-size: var(--t-base); }
+.totales dt { color: var(--texto-2); }
+.totales dd { margin: 0; font-weight: 500; }
+.totales div[data-total="true"] {
+  border-top: 1px solid var(--borde);
+  margin-top: var(--e1);
+  padding-top: var(--e2);
+  font-size: var(--t-medio);
+  font-weight: 700;
+}
+.totales div[data-alerta="true"] dd { color: var(--peligro); font-weight: 700; }
+
+.titulo-menor { font-size: var(--t-base); font-weight: 700; margin-bottom: var(--e1); }
+
+.lista-pagos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e1); }
+.lista-pagos li {
+  display: flex;
+  gap: var(--e2);
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--e1) var(--e2);
+  background: var(--superficie-2);
+  border-radius: var(--radio-menor);
+  font-size: var(--t-menor);
+  text-transform: capitalize;
+}
+
+.faltantes { display: flex; flex-direction: column; gap: var(--e2); align-items: flex-start; }
+.faltantes ul { margin: var(--e1) 0 0; padding-left: var(--e4); }

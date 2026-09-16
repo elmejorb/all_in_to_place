@@ -12,6 +12,13 @@ abstract class TestCase extends BaseTestCase
     private static ?string $claseSembrada = null;
     private static bool $esquemaCreado = false;
 
+    /**
+     * Ponlo en true cuando la clase pruebe algo con estado que se arrastra
+     * —la numeración de facturas, por ejemplo—: cada prueba arranca entonces
+     * con el escenario intacto, a cambio de tardar un poco más.
+     */
+    protected bool $sembrarPorPrueba = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -26,7 +33,7 @@ abstract class TestCase extends BaseTestCase
 
         // Cada clase arranca con el escenario intacto: lo que crea una prueba no
         // puede cambiarle la cuenta a la siguiente.
-        if (self::$claseSembrada !== static::class) {
+        if ($this->sembrarPorPrueba || self::$claseSembrada !== static::class) {
             Artisan::call('migrate:fresh', ['--database' => 'pgsql_migrator', '--force' => true]);
             Artisan::call('db:seed', ['--force' => true]);
             self::$claseSembrada = static::class;

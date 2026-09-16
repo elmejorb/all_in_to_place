@@ -21,8 +21,14 @@ class Empresa extends ModeloBase
     protected $fillable = [
         'nombre_legal', 'nombre_comercial', 'registro_comerciante', 'telefono', 'email',
         'direccion_fisica', 'direccion_postal', 'pais', 'moneda', 'zona_horaria',
-        'idioma', 'estado', 'logo_ruta',
+        'idioma', 'estado', 'logo_ruta', 'impuesto_desglose',
     ];
+
+    protected function casts(): array
+    {
+        // Cómo se reparte el impuesto que cobra esta empresa (FAC-04).
+        return ['impuesto_desglose' => 'array'];
+    }
 
     public function membresias(): HasMany
     {

@@ -42,6 +42,11 @@ class DatabaseSeeder extends Seeder
             'zona_horaria' => 'America/Puerto_Rico',
             'idioma' => 'es',
             'estado' => 'activa',
+            // 11.5% = 10.5 estatal + 1 municipal (FAC-04).
+            'impuesto_desglose' => [
+                ['nombre' => 'Estatal', 'milesimas' => 10500],
+                ['nombre' => 'Municipal', 'milesimas' => 1000],
+            ],
         ]);
 
         $santaMonica = Empresa::create([
@@ -65,6 +70,7 @@ class DatabaseSeeder extends Seeder
             'moneda' => 'COP',
             'zona_horaria' => 'America/Bogota',
             'estado' => 'suspendida',
+            'impuesto_desglose' => [['nombre' => 'IVA', 'milesimas' => 19000]],
         ]);
 
         // Un usuario por rol en El Álamo (04-roles-y-permisos.md).
