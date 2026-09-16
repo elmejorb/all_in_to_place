@@ -32,6 +32,7 @@ permite exigir un responsable por cuenta (`ROL-02`, `ADM-19`).
 |---|---|---|---|---|---|---|
 | Configurar la empresa y las series | Sí | Limit. | No | No | No | No |
 | Invitar usuarios y cambiar roles | Sí | Limit. | No | No | No | No |
+| Ver la lista de productos y precios | Sí | Sí | Sí | Sí | No | Sí |
 | Crear y editar productos y precios | Sí | Sí | Sí | Limit. | No | No |
 | Recibir compras y ajustar existencias | Sí | Sí | Sí | Limit. | No | No |
 | Ver clientes | Sí | Sí | Sí | Limit. | Sí | Sí |
@@ -52,8 +53,12 @@ Aclaraciones de los `Limit.`:
 - **Administrador / bitácora:** ve la de operación, no la de accesos y sesiones.
 - **Gerente / anular:** solo facturas del día en curso; las anteriores las anula
   un Administrador.
-- **Empleado / productos:** con perfil de almacén edita costo, existencia mínima
-  y datos logísticos; nunca el precio de venta.
+- **Empleado / ver productos:** los dos perfiles ven la lista con sus precios.
+  Es un permiso aparte del resto del catálogo (`productos.ver`) porque quien
+  está en el mostrador no puede vender lo que no puede buscar, pero tampoco
+  tiene por qué ver suplidores, categorías ni costos.
+- **Empleado / editar productos:** con perfil de almacén edita costo, existencia
+  mínima y datos logísticos; nunca el precio de venta.
 - **Empleado / existencias:** solo con perfil de almacén.
 - **Empleado / facturar:** solo con perfil de mostrador. Vende, pero no anula
   una venta ya emitida.
@@ -79,3 +84,4 @@ Aclaraciones de los `Limit.`:
 | ROL-08 | MVP | El rol Empleado se acota con un perfil al invitar al usuario: mostrador o almacén. Un mismo usuario puede tener los dos. |
 | ROL-09 | MVP | El rol se asigna por empresa, no por usuario: la misma persona puede ser Propietario en una y Empleado en otra. |
 | ROL-10 | F3 | Roles personalizados con permisos granulares por módulo. |
+| ROL-11 | MVP | Ver la lista de productos es un permiso propio, separado del resto del catálogo: quien factura la necesita aunque no administre el inventario. |

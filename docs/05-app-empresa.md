@@ -132,6 +132,11 @@ Los once módulos funcionales de la aplicación que usan las empresas.
 | FAC-16 | F2 | Propina y cargo por servicio configurables, separados del impuesto. |
 | FAC-17 | F3 | Facturas recurrentes con emisión automática y aviso al cliente. |
 | FAC-18 | F3 | Cobro con terminal de tarjeta integrada. |
+| FAC-19 | MVP | La factura se escribe en una hoja que se parece al documento que recibe el cliente: membrete de la empresa, renglones, nota y pie con el impuesto desglosado. La misma pantalla sirve para escribirla y para consultarla. |
+| FAC-20 | MVP | Guardar sin emitir: el borrador no saca número de la serie, no mueve inventario y no cuenta como venta. Se reabre tal como se dejó y se descarta sin dejar rastro. |
+| FAC-21 | MVP | Fecha del documento y vencimiento editables, independientes del momento en que se emite, que queda registrado aparte. |
+| FAC-22 | MVP | Vendedor y referencia del cliente (número de orden de compra) en la factura, y detalle libre por renglón. |
+| FAC-23 | MVP | Vista previa imprimible antes de emitir: lo que se revisa es exactamente lo que se imprime. |
 
 ## 5.9 Hoja de Cuadre (cierre de caja)
 

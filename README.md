@@ -37,7 +37,7 @@ propias rutas. Ver [docs/00-decision-arquitectura.md](docs/00-decision-arquitect
 | 12 | [Límites y pendientes](docs/12-limites-y-pendientes.md) | Decisiones cerradas, fuera de alcance, pendientes y riesgos |
 | 13 | [Seguridad](docs/13-seguridad.md) | Identidad, autorización, datos, web, operación y qué se prueba solo |
 | 14 | [Proceso y calidad](docs/14-proceso-y-calidad.md) | Definición de terminado, orden de trabajo, ambiente local |
-| 15 | [Pantalla de factura](docs/15-pantalla-de-factura.md) | Cómo debe verse la factura. **Pendiente de construir** |
+| 15 | [La hoja de factura](docs/15-pantalla-de-factura.md) | Cómo se escribe una factura: borrador, vista previa y emisión |
 | — | [matriz-requisitos.csv](docs/matriz-requisitos.csv) | Todos los requisitos en una tabla para seguimiento |
 
 ## Convenciones

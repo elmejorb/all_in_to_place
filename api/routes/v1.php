@@ -4,6 +4,7 @@ use App\Http\Middleware\ExigirEmpresa;
 use App\Http\Middleware\ExigirPermiso;
 use App\Http\V1\Controllers\CategoriaController;
 use App\Http\V1\Controllers\ClienteController;
+use App\Http\V1\Controllers\EmpresaController;
 use App\Http\V1\Controllers\FacturaController;
 use App\Http\V1\Controllers\ImportacionProductoController;
 use App\Http\V1\Controllers\ProductoController;
@@ -50,12 +51,25 @@ Route::middleware('auth:empresa')->group(function () {
             Route::put('categorias/{categoria}', [CategoriaController::class, 'update'])->name('v1.categorias.update');
         });
 
+        // Los datos del membrete: van en la hoja de la factura, así que los ve
+        // cualquiera que tenga la empresa activa (FAC-01).
+        Route::get('empresa', [EmpresaController::class, 'ver'])->name('v1.empresa.ver');
+
         // --- facturación (FAC-01 a FAC-09) ---
         Route::middleware(ExigirPermiso::class.':'.Permisos::FACTURAR)->group(function () {
             Route::get('facturas', [FacturaController::class, 'index'])->name('v1.facturas.index');
-            Route::get('facturas/{documento}', [FacturaController::class, 'ver'])->name('v1.facturas.ver');
             Route::post('facturas/calcular', [FacturaController::class, 'calcular'])->name('v1.facturas.calcular');
+
+            // Los borradores van antes que {documento}: si no, "borradores" se
+            // toma por el identificador de una factura.
+            Route::post('facturas/borradores', [FacturaController::class, 'guardarBorrador'])->name('v1.facturas.borrador');
+
+            Route::get('facturas/{documento}', [FacturaController::class, 'ver'])->name('v1.facturas.ver');
+            Route::put('facturas/{documento}', [FacturaController::class, 'actualizarBorrador'])->name('v1.facturas.actualizar');
+            Route::delete('facturas/{documento}', [FacturaController::class, 'descartarBorrador'])->name('v1.facturas.descartar');
+
             Route::post('facturas', [FacturaController::class, 'emitir'])->name('v1.facturas.emitir');
+            Route::post('facturas/{documento}/emitir', [FacturaController::class, 'emitirBorrador'])->name('v1.facturas.emitir-borrador');
             Route::post('facturas/{documento}/cobrar', [FacturaController::class, 'cobrar'])->name('v1.facturas.cobrar');
         });
 
@@ -78,8 +92,10 @@ Route::middleware('auth:empresa')->group(function () {
             Route::post('clientes/{cliente}/reactivar', [ClienteController::class, 'reactivar'])->name('v1.clientes.reactivar');
         });
 
+        // La lista de productos, no el catálogo entero: quien factura en el
+        // mostrador tiene que poder buscar lo que vende.
         Route::get('productos', [ProductoController::class, 'index'])
-            ->middleware(ExigirPermiso::class.':'.Permisos::CATALOGO_VER)
+            ->middleware(ExigirPermiso::class.':'.Permisos::PRODUCTOS_VER)
             ->name('v1.productos.index');
 
         Route::get('productos/{producto}/movimientos', [ProductoController::class, 'movimientos'])

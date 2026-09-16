@@ -198,8 +198,11 @@ class FacturaTest extends TestCase
             ->where('producto_id', $servicio->id)->count());
     }
 
-    public function test_renglon_de_texto_libre_sin_producto(): void
+    public function test_renglon_de_texto_libre_paga_el_impuesto_de_la_empresa(): void
     {
+        // Un servicio escrito a mano no viene del catálogo y no tiene tasa
+        // propia, pero se le cobra igual: lleva la estándar de la empresa.
+        // Antes salía sin impuesto, y eso es una factura mal hecha.
         $this->entrar();
 
         $r = $this->postJson('/v1/facturas', [
@@ -207,7 +210,21 @@ class FacturaTest extends TestCase
         ])->assertCreated();
 
         $this->assertSame('Entrega a domicilio', $r->json('renglones.0.descripcion'));
-        $this->assertSame('5.00', $r->json('total'));
+        $this->assertSame('11.5', $r->json('renglones.0.tasa'));
+        $this->assertSame('0.58', $r->json('impuesto'));
+        $this->assertSame('5.58', $r->json('total'));
+    }
+
+    public function test_la_tasa_de_un_renglon_se_puede_escribir_a_mano(): void
+    {
+        $this->entrar();
+
+        $r = $this->postJson('/v1/facturas', [
+            'renglones' => [['descripcion' => 'Exportacion', 'cantidad' => 1, 'precio' => '100.00', 'impuesto' => '0']],
+        ])->assertCreated();
+
+        $this->assertSame('0.00', $r->json('impuesto'));
+        $this->assertSame('100.00', $r->json('total'));
     }
 
     // --- cobro --------------------------------------------------------------
@@ -287,7 +304,8 @@ class FacturaTest extends TestCase
 
     public function test_una_factura_emitida_no_se_puede_borrar(): void
     {
-        // El permiso se lo quitó la base a la aplicación, no solo el código.
+        // Lo impide un disparador de la base, no solo el código. Y revienta:
+        // un borrado que no borra nada y no avisa es peor que un error.
         $this->entrar();
         $this->postJson('/v1/facturas', $this->ventaSimple())->assertCreated();
 

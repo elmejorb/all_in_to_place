@@ -19,8 +19,9 @@ class Documento extends ModeloBase
     public const ESTADOS = ['borrador', 'emitida', 'pagada_parcial', 'pagada', 'vencida', 'anulada'];
 
     protected $fillable = [
-        'serie_id', 'cliente_id', 'tipo', 'estado', 'numero', 'folio',
-        'cliente_nombre', 'cliente_exento', 'descuento_tipo', 'descuento_valor',
+        'serie_id', 'cliente_id', 'tipo', 'estado', 'numero', 'folio', 'referencia',
+        'fecha', 'cliente_nombre', 'cliente_exento', 'vendedor',
+        'descuento_tipo', 'descuento_valor',
         'subtotal_centavos', 'descuento_centavos', 'base_centavos', 'impuesto_centavos',
         'total_centavos', 'pagado_centavos', 'impuesto_desglose',
         'terminos_pago', 'vence_el', 'notas', 'usuario_id', 'emitida_en',
@@ -31,6 +32,7 @@ class Documento extends ModeloBase
     {
         return [
             'cliente_exento' => 'boolean',
+            'fecha' => 'date',
             'subtotal_centavos' => 'integer',
             'descuento_centavos' => 'integer',
             'base_centavos' => 'integer',
@@ -44,7 +46,7 @@ class Documento extends ModeloBase
         ];
     }
 
-    public const ORDENABLES = ['numero', 'total_centavos', 'created_at'];
+    public const ORDENABLES = ['numero', 'total_centavos', 'fecha', 'created_at'];
 
     public function renglones(): HasMany
     {

@@ -11,11 +11,17 @@ use App\Models\Empresa;
 use App\Models\Pago;
 use App\Models\Producto;
 use App\Models\SerieDocumento;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Emitir, cobrar y anular. Todo lo que toca dinero y existencias pasa por aquí.
+ *
+ * Una factura tiene dos vidas. Mientras es **borrador** se puede cambiar
+ * entera, no tiene número y no ha movido inventario: no existe para nadie más
+ * que para quien la escribe. Al **emitirse** saca número de la serie, descuenta
+ * la mercancía y se congela: desde ahí solo se cobra o se anula (FAC-09).
  */
 final class Facturador
 {
@@ -23,12 +29,14 @@ final class Facturador
      * Calcula una factura sin guardar nada, para que la pantalla muestre los
      * totales mientras se arma la venta.
      *
-     * @param  list<array<string, mixed>>  $renglones  con producto (ulid), cantidad, precio, descuento
+     * @param  list<array<string, mixed>>  $renglones  con producto (ulid), cantidad, precio, impuesto, descuento
      */
     public static function calcular(array $renglones, array $descuentoGlobal = [], ?Cliente $cliente = null): array
     {
+        $empresa = self::empresaActual();
         $productos = self::productosDe($renglones);
         $exentoElCliente = (bool) $cliente?->exento;
+        $tasaPorDefecto = self::tasaEstandar($empresa);
 
         $paraCalcular = [];
 
@@ -40,140 +48,107 @@ final class Facturador
                 'precio_centavos' => self::precioDe($renglon, $producto),
                 'descuento_tipo' => $renglon['descuento_tipo'] ?? null,
                 'descuento_valor' => $renglon['descuento_valor'] ?? null,
-                'impuesto_milesimas' => $producto?->impuesto_milesimas ?? 0,
+                'impuesto_milesimas' => self::tasaDe($renglon, $producto, $tasaPorDefecto),
                 // El cliente exento no paga impuesto en ningún renglón (FAC-06).
                 'exento' => $exentoElCliente,
             ];
         }
 
-        return Totales::calcular($paraCalcular, $descuentoGlobal, self::desgloseDe(self::empresaActual()));
+        return Totales::calcular($paraCalcular, $descuentoGlobal, self::desgloseDe($empresa));
     }
 
     /**
-     * Emite la factura: le pone número, descuenta existencias y la deja cobrada
-     * en lo que se haya pagado. Todo en una sola transacción.
+     * Guarda la factura sin emitirla: ni número, ni inventario, ni cobro.
+     * Sirve para dejarla a medias y volver mañana (FAC-02).
      *
-     * @param  list<array<string, mixed>>  $renglones
-     * @param  list<array{metodo: string, monto: string|int, recibido?: string|int|null, referencia?: ?string}>  $pagos
+     * @param  array<string, mixed>  $datos
      */
-    public static function emitir(
-        array $renglones,
-        array $pagos = [],
-        ?Cliente $cliente = null,
-        array $descuentoGlobal = [],
-        ?string $notas = null,
-        ?string $terminosPago = null,
-        bool $permitirSinExistencia = false,
-    ): Documento {
+    public static function guardarBorrador(array $datos, ?Documento $borrador = null): Documento
+    {
+        return DB::transaction(function () use ($datos, $borrador) {
+            if ($borrador) {
+                self::exigirBorrador($borrador);
+            }
+
+            $renglones = $datos['renglones'] ?? [];
+            $cliente = $datos['cliente'] ?? null;
+            $calculo = self::calcular($renglones, $datos['descuento'] ?? [], $cliente);
+
+            $documento = self::guardarCabecera(
+                $borrador,
+                $datos,
+                $calculo,
+                ['estado' => 'borrador', 'numero' => null, 'folio' => null],
+            );
+
+            self::escribirRenglones($documento, $renglones, $calculo, moverInventario: false);
+
+            return $documento->fresh(['renglones', 'pagos']);
+        });
+    }
+
+    /**
+     * Emite: le pone número, descuenta existencias y la deja cobrada en lo que
+     * se haya pagado. Todo en una sola transacción.
+     *
+     * Con `$borrador` convierte ese borrador en factura conservando su
+     * identificador, de modo que el enlace que alguien tenía abierto sigue
+     * llevando al mismo documento.
+     *
+     * @param  array<string, mixed>  $datos  renglones, cliente, pagos, fecha...
+     */
+    public static function emitir(array $datos, bool $permitirSinExistencia = false, ?Documento $borrador = null): Documento
+    {
+        $renglones = $datos['renglones'] ?? [];
+
         if ($renglones === []) {
             throw new \DomainException('Una factura sin renglones no se puede emitir.');
         }
 
-        return DB::transaction(function () use ($renglones, $pagos, $cliente, $descuentoGlobal, $notas, $terminosPago, $permitirSinExistencia) {
-            $empresa = self::empresaActual();
-            $productos = self::productosDe($renglones);
-            $calculo = self::calcular($renglones, $descuentoGlobal, $cliente);
-
-            // --- existencias: se revisa antes de tocar nada (FAC-08) ----------
-            $faltantes = [];
-
-            foreach ($renglones as $i => $renglon) {
-                $producto = $productos[$renglon['producto'] ?? ''] ?? null;
-
-                if (! $producto || $producto->es_servicio) {
-                    continue;
-                }
-
-                $cantidad = (float) ($renglon['cantidad'] ?? 0);
-
-                if ((float) $producto->existencia < $cantidad) {
-                    $faltantes[] = [
-                        'producto' => $producto->nombre,
-                        'pedido' => $cantidad,
-                        'disponible' => (float) $producto->existencia,
-                    ];
-                }
+        return DB::transaction(function () use ($datos, $renglones, $permitirSinExistencia, $borrador) {
+            if ($borrador) {
+                self::exigirBorrador($borrador);
             }
 
-            if ($faltantes !== [] && ! $permitirSinExistencia) {
-                throw new SinExistencia($faltantes);
-            }
+            $cliente = $datos['cliente'] ?? null;
+            $calculo = self::calcular($renglones, $datos['descuento'] ?? [], $cliente);
+
+            self::exigirExistencia($renglones, $permitirSinExistencia);
 
             // --- numeración sin huecos (ARQ-08) -------------------------------
             $serie = self::serieDe('factura');
             $numero = self::siguienteNumero($serie);
 
-            $documento = Documento::create([
+            $documento = self::guardarCabecera($borrador, $datos, $calculo, [
                 'serie_id' => $serie->id,
-                'cliente_id' => $cliente?->id,
-                'tipo' => 'factura',
                 'estado' => 'emitida',
                 'numero' => $numero,
                 'folio' => $serie->folio($numero),
-                'cliente_nombre' => $cliente?->nombre,
-                'cliente_exento' => (bool) $cliente?->exento,
-                'descuento_tipo' => $descuentoGlobal['tipo'] ?? null,
-                'descuento_valor' => $descuentoGlobal['valor'] ?? null,
-                'subtotal_centavos' => $calculo['subtotal'],
-                'descuento_centavos' => $calculo['descuento_renglones'] + $calculo['descuento_global'],
-                'base_centavos' => $calculo['base'],
-                'impuesto_centavos' => $calculo['impuesto'],
-                'total_centavos' => $calculo['total'],
-                'pagado_centavos' => 0,
-                'impuesto_desglose' => $calculo['desglose'],
-                'terminos_pago' => $terminosPago ?? $cliente?->terminos_pago,
-                'vence_el' => self::vencimiento($terminosPago ?? $cliente?->terminos_pago),
-                'notas' => $notas,
-                'usuario_id' => Auth::guard('empresa')->id(),
                 'emitida_en' => now(),
             ]);
 
-            foreach ($renglones as $i => $renglon) {
-                $producto = $productos[$renglon['producto'] ?? ''] ?? null;
-                $calculado = $calculo['renglones'][$i];
+            self::escribirRenglones($documento, $renglones, $calculo, moverInventario: true);
 
-                DocumentoRenglon::create([
-                    'documento_id' => $documento->id,
-                    'producto_id' => $producto?->id,
-                    'orden' => $i,
-                    // Se copia: la factura no cambia si el producto se renombra.
-                    'descripcion' => $renglon['descripcion'] ?? $producto?->nombre ?? 'Sin descripción',
-                    'sku' => $producto?->sku,
-                    'unidad' => $producto?->unidad ?? 'unidad',
-                    'es_servicio' => (bool) $producto?->es_servicio,
-                    'cantidad' => $calculado['cantidad'],
-                    'precio_centavos' => $calculado['precio_centavos'],
-                    'descuento_tipo' => $renglon['descuento_tipo'] ?? null,
-                    'descuento_valor' => $renglon['descuento_valor'] ?? null,
-                    'impuesto_milesimas' => $calculado['impuesto_milesimas'],
-                    'exento' => $calculado['exento'],
-                    'bruto_centavos' => $calculado['bruto_centavos'],
-                    'descuento_centavos' => $calculado['descuento_centavos'] + $calculado['descuento_global_centavos'],
-                    'base_centavos' => $calculado['base_centavos'],
-                    'impuesto_centavos' => $calculado['impuesto_centavos'],
-                    'total_centavos' => $calculado['total_centavos'],
-                ]);
-
-                // --- se descuenta el inventario en la misma transacción -------
-                if ($producto && ! $producto->es_servicio && $calculado['cantidad'] > 0) {
-                    Inventario::registrar(
-                        $producto,
-                        'venta',
-                        -$calculado['cantidad'],
-                        null,
-                        null,
-                        $producto->costo_centavos ?: null,
-                        'documento',
-                        $documento->id,
-                    );
-                }
-            }
-
-            foreach ($pagos as $pago) {
+            foreach ($datos['pagos'] ?? [] as $pago) {
                 self::registrarPago($documento, $pago);
             }
 
             return $documento->fresh(['renglones', 'pagos']);
+        });
+    }
+
+    /**
+     * Descarta un borrador. Se borra de verdad, porque nunca existió para
+     * nadie: no tuvo número ni movió mercancía. Lo emitido se anula, no se
+     * borra, y de eso se encarga la base de datos.
+     */
+    public static function descartarBorrador(Documento $borrador): void
+    {
+        self::exigirBorrador($borrador);
+
+        DB::transaction(function () use ($borrador) {
+            $borrador->renglones()->delete();
+            $borrador->delete();
         });
     }
 
@@ -274,6 +249,151 @@ final class Facturador
         });
     }
 
+    // --- cabecera y renglones -----------------------------------------------
+
+    /**
+     * Los campos que comparten el borrador y la factura emitida. `$propios` es
+     * lo que distingue a cada una: número, estado, folio.
+     */
+    private static function guardarCabecera(?Documento $documento, array $datos, array $calculo, array $propios): Documento
+    {
+        /** @var ?Cliente $cliente */
+        $cliente = $datos['cliente'] ?? null;
+        $terminos = $datos['terminos_pago'] ?? $cliente?->terminos_pago;
+        $fecha = self::fecha($datos['fecha'] ?? null);
+
+        $campos = [
+            'cliente_id' => $cliente?->id,
+            'tipo' => 'factura',
+            'fecha' => $fecha,
+            // El nombre se copia: si luego renombran al cliente, la factura
+            // tiene que seguir diciendo lo que decía.
+            'cliente_nombre' => $cliente?->nombre,
+            'cliente_exento' => (bool) $cliente?->exento,
+            'vendedor' => self::texto($datos['vendedor'] ?? null),
+            'referencia' => self::texto($datos['referencia'] ?? null),
+            'descuento_tipo' => $datos['descuento']['tipo'] ?? null,
+            'descuento_valor' => $datos['descuento']['valor'] ?? null,
+            'subtotal_centavos' => $calculo['subtotal'],
+            'descuento_centavos' => $calculo['descuento_renglones'] + $calculo['descuento_global'],
+            'base_centavos' => $calculo['base'],
+            'impuesto_centavos' => $calculo['impuesto'],
+            'total_centavos' => $calculo['total'],
+            'impuesto_desglose' => $calculo['desglose'],
+            'terminos_pago' => $terminos,
+            'vence_el' => self::vencimiento($datos['vence_el'] ?? null, $terminos, $fecha),
+            'notas' => self::texto($datos['notas'] ?? null),
+        ];
+
+        $campos = array_merge($campos, $propios);
+
+        if ($documento) {
+            $documento->update($campos);
+
+            return $documento;
+        }
+
+        return Documento::create(array_merge($campos, [
+            'pagado_centavos' => 0,
+            'usuario_id' => Auth::guard('empresa')->id(),
+        ]));
+    }
+
+    /**
+     * Reescribe los renglones. Al guardar un borrador se borran y se vuelven a
+     * escribir: es más simple y más seguro que casarlos uno a uno, y un
+     * borrador no tiene historia que preservar.
+     */
+    private static function escribirRenglones(Documento $documento, array $renglones, array $calculo, bool $moverInventario): void
+    {
+        $documento->renglones()->delete();
+
+        $productos = self::productosDe($renglones);
+
+        foreach ($renglones as $i => $renglon) {
+            $producto = $productos[$renglon['producto'] ?? ''] ?? null;
+            $calculado = $calculo['renglones'][$i];
+
+            DocumentoRenglon::create([
+                'documento_id' => $documento->id,
+                'producto_id' => $producto?->id,
+                'orden' => $i,
+                // Se copia: la factura no cambia si el producto se renombra.
+                'descripcion' => self::texto($renglon['descripcion'] ?? null) ?? $producto?->nombre ?? 'Sin descripción',
+                'detalle' => self::texto($renglon['detalle'] ?? null),
+                'sku' => $producto?->sku,
+                'unidad' => $producto?->unidad ?? 'unidad',
+                'es_servicio' => (bool) $producto?->es_servicio,
+                'cantidad' => $calculado['cantidad'],
+                'precio_centavos' => $calculado['precio_centavos'],
+                'descuento_tipo' => $renglon['descuento_tipo'] ?? null,
+                'descuento_valor' => $renglon['descuento_valor'] ?? null,
+                'impuesto_milesimas' => $calculado['impuesto_milesimas'],
+                'exento' => $calculado['exento'],
+                'bruto_centavos' => $calculado['bruto_centavos'],
+                'descuento_centavos' => $calculado['descuento_centavos'] + $calculado['descuento_global_centavos'],
+                'base_centavos' => $calculado['base_centavos'],
+                'impuesto_centavos' => $calculado['impuesto_centavos'],
+                'total_centavos' => $calculado['total_centavos'],
+            ]);
+
+            if ($moverInventario && $producto && ! $producto->es_servicio && $calculado['cantidad'] > 0) {
+                Inventario::registrar(
+                    $producto,
+                    'venta',
+                    -$calculado['cantidad'],
+                    null,
+                    null,
+                    $producto->costo_centavos ?: null,
+                    'documento',
+                    $documento->id,
+                );
+            }
+        }
+    }
+
+    /** Se revisa antes de tocar nada: o alcanza todo, o no se vende nada (FAC-08). */
+    private static function exigirExistencia(array $renglones, bool $permitir): void
+    {
+        if ($permitir) {
+            return;
+        }
+
+        $productos = self::productosDe($renglones);
+        $faltantes = [];
+
+        foreach ($renglones as $renglon) {
+            $producto = $productos[$renglon['producto'] ?? ''] ?? null;
+
+            if (! $producto || $producto->es_servicio) {
+                continue;
+            }
+
+            $cantidad = (float) ($renglon['cantidad'] ?? 0);
+
+            if ((float) $producto->existencia < $cantidad) {
+                $faltantes[] = [
+                    'producto' => $producto->nombre,
+                    'pedido' => $cantidad,
+                    'disponible' => (float) $producto->existencia,
+                ];
+            }
+        }
+
+        if ($faltantes !== []) {
+            throw new SinExistencia($faltantes);
+        }
+    }
+
+    private static function exigirBorrador(Documento $documento): void
+    {
+        if ($documento->estado !== 'borrador') {
+            throw new \DomainException('Una factura ya emitida no se modifica: se anula y se hace otra.');
+        }
+    }
+
+    // --- apoyo ---------------------------------------------------------------
+
     /**
      * El siguiente número de la serie, con la fila bloqueada: dos cajeros a la
      * vez no pueden sacar el mismo (ARQ-08).
@@ -327,6 +447,22 @@ final class Facturador
         return $producto?->precio_centavos ?? 0;
     }
 
+    /**
+     * La tasa del renglón. Manda la que se escribió en la hoja; si no, la del
+     * producto; y si el renglón es texto libre —un servicio escrito a mano—,
+     * la tasa estándar de la empresa, que es lo que de verdad se cobra. Antes
+     * un renglón sin producto salía sin impuesto, y eso es una factura mal
+     * hecha.
+     */
+    private static function tasaDe(array $renglon, ?Producto $producto, int $porDefecto): int
+    {
+        if (isset($renglon['impuesto']) && $renglon['impuesto'] !== '' && $renglon['impuesto'] !== null) {
+            return max(0, Precio::tasaAMilesimas($renglon['impuesto']) ?? 0);
+        }
+
+        return $producto?->impuesto_milesimas ?? $porDefecto;
+    }
+
     private static function empresaActual(): ?Empresa
     {
         $id = ContextoRls::empresaActual();
@@ -340,17 +476,39 @@ final class Facturador
         return $empresa?->impuesto_desglose ?? [];
     }
 
-    /** "30 dias" se convierte en una fecha concreta (FAC-15). */
-    private static function vencimiento(?string $terminos): ?string
+    /** La suma de los componentes: 10.5% estatal + 1% municipal = 11.5%. */
+    private static function tasaEstandar(?Empresa $empresa): int
     {
-        if (! $terminos) {
-            return null;
+        return (int) array_sum(array_column(self::desgloseDe($empresa), 'milesimas'));
+    }
+
+    private static function fecha(?string $fecha): string
+    {
+        return $fecha ? Carbon::parse($fecha)->toDateString() : now()->toDateString();
+    }
+
+    /**
+     * El vencimiento: el que se escribió en la hoja, o el que sale de los
+     * términos contados desde la fecha del documento ("30 dias", FAC-15).
+     */
+    private static function vencimiento(?string $explicito, ?string $terminos, string $fecha): ?string
+    {
+        if ($explicito) {
+            return Carbon::parse($explicito)->toDateString();
         }
 
-        if (preg_match('/(\d+)\s*d/i', $terminos, $coincidencias)) {
-            return now()->addDays((int) $coincidencias[1])->toDateString();
+        if ($terminos && preg_match('/(\d+)\s*d/i', $terminos, $coincidencias)) {
+            return Carbon::parse($fecha)->addDays((int) $coincidencias[1])->toDateString();
         }
 
         return null;
+    }
+
+    /** Un campo vacío es ausencia, no una cadena en blanco guardada. */
+    private static function texto(?string $valor): ?string
+    {
+        $limpio = trim((string) $valor);
+
+        return $limpio === '' ? null : $limpio;
     }
 }

@@ -665,7 +665,9 @@ tr:hover .acciones, tr:focus-within .acciones { opacity: 1; }
   background: var(--superficie-2);
 }
 
-.resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); }
+/* Se acomoda a cuantos datos traiga la pantalla: tres lo normal, cuatro
+   cuando además hay borradores. */
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--e2); }
 
 .resumen__dato {
   display: flex;
@@ -675,7 +677,14 @@ tr:hover .acciones, tr:focus-within .acciones { opacity: 1; }
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   background: var(--superficie-2);
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
+
+/* Un dato del resumen que además filtra el listado. */
+button.resumen__dato { cursor: pointer; }
+button.resumen__dato:hover { border-color: var(--marca); background: var(--marca-suave); }
 .resumen__dato b { font-size: var(--t-mayor); font-variant-numeric: tabular-nums; line-height: 1.2; }
 .resumen__dato small { color: var(--tenue); font-size: var(--t-menor); }
 .resumen__dato[data-tono="bien"] b { color: var(--bien); }

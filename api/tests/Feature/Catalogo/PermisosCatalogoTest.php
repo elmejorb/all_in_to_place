@@ -79,6 +79,32 @@ class PermisosCatalogoTest extends TestCase
         $this->postJson('/v1/suplidores', ['razon_social' => 'No debería crearse'])->assertStatus(403);
     }
 
+    public function test_el_de_mostrador_ve_los_productos_aunque_no_el_catalogo(): void
+    {
+        // No se puede vender lo que no se puede buscar: quien factura necesita
+        // la lista de precios. Lo demás del catálogo —suplidores, categorías,
+        // costos— sigue siendo ajeno a la caja.
+        $this->entrar('emily@elalamo.test');
+
+        $r = $this->getJson('/v1/productos')->assertOk();
+
+        $this->assertNotEmpty($r->json('datos'));
+        $this->assertArrayNotHasKey('costo', $r->json('datos.0'));
+        $this->assertFalse($r->json('permisos.ver_costos'));
+        $this->assertFalse($r->json('permisos.editar'));
+
+        $this->getJson('/v1/suplidores')->assertStatus(403);
+        $this->getJson('/v1/categorias')->assertStatus(403);
+        $this->getJson('/v1/productos/exportar')->assertStatus(403);
+    }
+
+    public function test_el_contratista_sigue_sin_ver_productos(): void
+    {
+        $this->entrar('julio@elalamo.test');
+
+        $this->getJson('/v1/productos')->assertStatus(403);
+    }
+
     public function test_una_empresa_suspendida_se_lee_pero_no_se_escribe(): void
     {
         // ADM-03: los datos siguen ahí y se pueden consultar y exportar.

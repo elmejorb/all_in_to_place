@@ -1,0 +1,479 @@
+/* La hoja de factura (docs/15, FAC-01).
+ *
+ * El resto de la aplicación es una herramienta densa: tablas de 34px y letra de
+ * 13. Esta pantalla no. Aquí se está escribiendo un documento que alguien va a
+ * recibir, así que la pantalla se parece al papel: fondo blanco, márgenes
+ * anchos, cifras grandes y ningún borde de formulario a la vista mientras no se
+ * esté escribiendo en él.
+ *
+ * Los campos son invisibles hasta que se tocan. Un formulario con veinte cajas
+ * dibujadas se lee como un formulario; una hoja con el texto puesto donde va se
+ * lee como una factura, y eso es lo que hay que revisar antes de mandarla.
+ */
+
+.hoja-pantalla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: var(--e5);
+  align-items: start;
+}
+
+/* --- barra de acciones, siempre a la vista ------------------------------- */
+
+.hoja-barra {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) 0;
+  margin-bottom: calc(var(--e3) * -1);
+  background: var(--papel);
+}
+
+.hoja-barra__titulo { display: flex; align-items: baseline; gap: var(--e2); min-width: 0; }
+.hoja-barra__titulo h1 { font-size: var(--t-mayor); }
+.hoja-barra__acciones { margin-left: auto; display: flex; gap: var(--e2); align-items: center; }
+
+/* Lo que se escribió y todavía no se ha guardado. */
+.hoja-barra__estado {
+  font-size: var(--t-menor);
+  color: var(--tenue);
+  white-space: nowrap;
+}
+.hoja-barra__estado[data-sucio="true"] { color: var(--aviso); font-weight: 600; }
+
+/* --- el papel ------------------------------------------------------------ */
+
+.hoja {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-flotante);
+  padding: var(--e6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  /* La hoja lleva su propia escala: es un documento, no una tabla. */
+  font-size: 0.875rem;
+}
+
+@media (max-width: 1100px) {
+  .hoja-pantalla { grid-template-columns: minmax(0, 1fr); }
+  .hoja { padding: var(--e4); }
+}
+
+/* --- membrete ------------------------------------------------------------ */
+
+.hoja__membrete {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--e4);
+  align-items: start;
+}
+
+.hoja__logo {
+  width: 15rem;
+  min-height: 6.5rem;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e1);
+  text-align: center;
+  padding: var(--e3);
+  color: var(--tenue);
+  font-size: var(--t-menor);
+  background: var(--superficie-2);
+}
+
+.hoja__logo img { max-width: 100%; max-height: 5.5rem; object-fit: contain; }
+
+.hoja__emisor { text-align: right; line-height: 1.5; }
+.hoja__emisor b { display: block; font-size: var(--t-medio); }
+.hoja__emisor span { display: block; color: var(--texto-2); }
+
+/* --- la fila de datos: cliente, fechas, folio, total --------------------- */
+
+.hoja__datos {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.4fr) repeat(2, minmax(8rem, 1fr)) auto;
+  gap: var(--e4);
+  align-items: start;
+  padding-top: var(--e4);
+  border-top: 1px solid var(--borde);
+}
+
+@media (max-width: 760px) {
+  .hoja__membrete,
+  .hoja__datos { grid-template-columns: minmax(0, 1fr); }
+  .hoja__emisor { text-align: left; }
+}
+
+.hoja__campo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.hoja__campo > label,
+.hoja__rotulo {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+
+/* El control sin caja: se dibuja solo cuando se está escribiendo en él. */
+.hoja__campo input,
+.hoja__campo select,
+.hoja__campo textarea {
+  font: inherit;
+  color: var(--texto);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-menor);
+  padding: 2px var(--e1);
+  margin-left: calc(var(--e1) * -1);
+  width: 100%;
+}
+
+.hoja__campo select { margin-left: calc(var(--e1) * -1 - 2px); }
+
+.hoja__campo input:hover,
+.hoja__campo select:hover,
+.hoja__campo textarea:hover { background: var(--superficie-2); border-color: var(--borde); }
+
+.hoja__campo input:focus,
+.hoja__campo select:focus,
+.hoja__campo textarea:focus {
+  background: var(--superficie);
+  border-color: var(--marca);
+  outline: none;
+}
+
+.hoja__campo input::placeholder,
+.hoja__campo textarea::placeholder { color: var(--tenue); font-style: italic; }
+.hoja__campo input:disabled,
+.hoja__campo select:disabled,
+.hoja__campo textarea:disabled { color: var(--texto); opacity: 1; }
+
+.hoja__folio { font-family: var(--tipo-mono); font-size: var(--t-medio); font-weight: 500; }
+
+/* Un segundo dato dentro del mismo bloque, con aire para no leerse como uno. */
+.hoja__separado { margin-top: var(--e3); }
+
+.hoja__nota { margin: 0; white-space: pre-wrap; color: var(--texto-2); }
+
+.hoja__gran-total { text-align: right; }
+.hoja__gran-total b {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.hoja__enlace {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-menor);
+  color: var(--marca);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+.hoja__enlace:hover { color: var(--marca-fuerte); text-decoration: underline; }
+.hoja__enlace[data-tono="peligro"] { color: var(--peligro); }
+
+/* --- renglones ----------------------------------------------------------- */
+
+.renglones-hoja { width: 100%; border-collapse: collapse; }
+
+.renglones-hoja thead th {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  text-align: left;
+  padding: 0 var(--e2) var(--e2);
+  border-bottom: 2px solid var(--texto);
+  white-space: nowrap;
+}
+
+.renglones-hoja th.derecha, .renglones-hoja td.derecha { text-align: right; }
+
+.renglones-hoja tbody td {
+  padding: var(--e2);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: top;
+}
+
+.renglones-hoja tbody tr:hover td { background: var(--superficie-2); }
+
+.renglon-hoja__concepto { display: flex; flex-direction: column; gap: 2px; }
+
+.renglon-hoja__concepto select,
+.renglon-hoja__concepto input,
+.renglon-hoja__concepto textarea,
+.renglones-hoja td input {
+  font: inherit;
+  color: var(--texto);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radio-menor);
+  padding: 2px var(--e1);
+  width: 100%;
+}
+
+.renglon-hoja__concepto > select,
+.renglon-hoja__concepto > input:first-child { font-weight: 600; }
+
+.renglon-hoja__detalle {
+  resize: vertical;
+  min-height: 1.6rem;
+  font-size: var(--t-menor);
+  color: var(--texto-2);
+  line-height: 1.45;
+}
+
+.renglones-hoja td input { text-align: right; font-variant-numeric: tabular-nums; }
+.renglones-hoja td input:hover,
+.renglon-hoja__concepto select:hover,
+.renglon-hoja__concepto textarea:hover { background: var(--superficie-3); border-color: var(--borde); }
+.renglones-hoja td input:focus,
+.renglon-hoja__concepto select:focus,
+.renglon-hoja__concepto textarea:focus { background: var(--superficie); border-color: var(--marca); outline: none; }
+
+.renglon-hoja__total { font-variant-numeric: tabular-nums; font-weight: 600; padding-top: 5px; }
+.renglon-hoja__aviso { display: block; font-size: var(--t-micro); color: var(--aviso); font-weight: 600; }
+
+.renglon-hoja__quitar {
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  cursor: pointer;
+  font-size: var(--t-medio);
+  line-height: 1;
+  padding: var(--e1);
+  border-radius: var(--radio-menor);
+}
+.renglon-hoja__quitar:hover { color: var(--peligro); background: var(--peligro-suave); }
+
+.hoja__agregar {
+  width: 100%;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: transparent;
+  color: var(--marca);
+  font: inherit;
+  font-weight: 600;
+  padding: var(--e2);
+  cursor: pointer;
+  margin-top: var(--e2);
+}
+.hoja__agregar:hover { background: var(--marca-suave); border-color: var(--marca); }
+
+/* --- totales ------------------------------------------------------------- */
+
+.hoja__cierre {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, auto);
+  gap: var(--e5);
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .hoja__cierre { grid-template-columns: minmax(0, 1fr); }
+}
+
+.totales-hoja { display: flex; flex-direction: column; gap: var(--e1); }
+
+.totales-hoja__linea {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e5);
+  align-items: baseline;
+}
+
+.totales-hoja__linea dt { color: var(--texto-2); }
+.totales-hoja__linea dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.totales-hoja__linea[data-total="true"] {
+  border-top: 1px solid var(--texto);
+  margin-top: var(--e2);
+  padding-top: var(--e2);
+  font-size: var(--t-medio);
+  font-weight: 700;
+}
+.totales-hoja__linea[data-total="true"] dt { color: var(--texto); }
+.totales-hoja__linea[data-alerta="true"] dd { color: var(--peligro); font-weight: 700; }
+.totales-hoja__linea[data-tenue="true"] { color: var(--tenue); font-size: var(--t-menor); }
+
+.hoja__descuento { display: flex; gap: var(--e1); align-items: center; }
+.hoja__descuento input { width: 5rem; }
+.hoja__descuento select { width: auto; }
+
+/* --- columna de la derecha ---------------------------------------------- */
+
+.hoja-aside {
+  position: sticky;
+  top: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.tarjeta-config {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.tarjeta-config__cabeza { padding: var(--e3) var(--e4) var(--e2); }
+.tarjeta-config__cabeza h2 { font-size: var(--t-medio); }
+.tarjeta-config__cabeza p { margin: 0; color: var(--tenue); font-size: var(--t-menor); }
+
+.tarjeta-config__bloque {
+  padding: var(--e3) var(--e4);
+  border-top: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.tarjeta-config__bloque > h3 {
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--tenue);
+}
+
+.tarjeta-config__dato { display: flex; justify-content: space-between; gap: var(--e3); align-items: baseline; }
+.tarjeta-config__dato span { color: var(--texto-2); font-size: var(--t-menor); }
+.tarjeta-config__dato b { font-variant-numeric: tabular-nums; }
+
+.interruptor { display: flex; align-items: center; gap: var(--e2); cursor: pointer; font-weight: 600; }
+.interruptor input { width: 1rem; height: 1rem; accent-color: var(--marca); margin: 0; }
+
+.cambio-vivo {
+  background: var(--bien-suave);
+  color: var(--bien);
+  border-radius: var(--radio-menor);
+  padding: var(--e2) var(--e3);
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+.cambio-vivo[data-falta="true"] { background: var(--peligro-suave); color: var(--peligro); }
+
+/* --- vista previa: la hoja sin nada alrededor ---------------------------- */
+
+.previa-velo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(13, 35, 32, .55);
+  overflow: auto;
+  padding: var(--e5) var(--e4);
+}
+
+.previa-caja { max-width: 52rem; margin: 0 auto; display: flex; flex-direction: column; gap: var(--e3); }
+.previa-caja__barra { display: flex; gap: var(--e2); justify-content: flex-end; }
+
+/* En la previa no se escribe: los controles se leen como texto impreso. */
+.previa .hoja__campo input,
+.previa .hoja__campo select,
+.previa .hoja__campo textarea,
+.previa .renglones-hoja input,
+.previa .renglones-hoja select,
+.previa .renglones-hoja textarea {
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* --- impresión ----------------------------------------------------------- */
+
+@media print {
+  .rail, .barra-superior, .hoja-barra, .hoja-aside, .avisos,
+  .previa-caja__barra, .hoja__agregar, .renglon-hoja__quitar { display: none !important; }
+
+  .previa-velo { position: static; background: none; padding: 0; overflow: visible; }
+  .previa-caja { max-width: none; }
+
+  .estructura, .estructura__cuerpo, .pantalla { display: block; padding: 0; margin: 0; }
+
+  .hoja {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    color: #000;
+    background: #fff;
+  }
+
+  .renglones-hoja tbody tr { break-inside: avoid; }
+}
+
+/* --- pantalla chica ------------------------------------------------------
+   Una tabla de cinco columnas no cabe en 390 px sin volverse ilegible, así que
+   cada renglón se dibuja como una ficha: el concepto arriba y las cifras
+   debajo, cada una con su rótulo, porque la cabecera de la tabla ya no está. */
+
+@media (max-width: 760px) {
+  .hoja-barra { flex-wrap: wrap; }
+  .hoja-barra__titulo { width: 100%; }
+  .hoja-barra__acciones { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .hoja-barra__estado { order: -1; }
+
+  .renglones-hoja thead { display: none; }
+  .renglones-hoja, .renglones-hoja tbody { display: block; }
+
+  .renglones-hoja tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--e2);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: var(--e3);
+    margin-bottom: var(--e2);
+  }
+
+  .renglones-hoja tbody td { display: block; border: 0; padding: 0; }
+  .renglones-hoja tbody td:first-child { grid-column: 1 / -1; padding-right: 1.5rem; }
+
+  .renglones-hoja td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    display: block;
+    font-size: var(--t-micro);
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--tenue);
+  }
+
+  .renglon-hoja__total {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--borde);
+    padding-top: var(--e2) !important;
+  }
+
+  /* La papelera va en la esquina de la ficha, no en una columna propia. */
+  .renglones-hoja tbody td:last-child:not([data-rotulo]) { position: absolute; top: var(--e2); right: var(--e2); }
+
+  .hoja__cierre { gap: var(--e4); }
+  .hoja__gran-total { text-align: left; }
+}

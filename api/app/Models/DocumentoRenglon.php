@@ -18,7 +18,7 @@ class DocumentoRenglon extends ModeloBase
     public $timestamps = false;
 
     protected $fillable = [
-        'documento_id', 'producto_id', 'orden', 'descripcion', 'sku', 'unidad',
+        'documento_id', 'producto_id', 'orden', 'descripcion', 'detalle', 'sku', 'unidad',
         'es_servicio', 'cantidad', 'precio_centavos', 'descuento_tipo', 'descuento_valor',
         'impuesto_milesimas', 'exento', 'bruto_centavos', 'descuento_centavos',
         'base_centavos', 'impuesto_centavos', 'total_centavos',

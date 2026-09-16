@@ -1,92 +1,112 @@
-# 15 · Pantalla de factura: cómo debe verse
+# 15 · La hoja de factura
 
-> Referencia entregada por Luis el 15 de septiembre de 2026, a partir de la
-> pantalla del sistema actual. **Pendiente de construir.** Lo que hay hoy en v2
-> es un panel lateral (`NuevaFactura.tsx`), que sirve para una venta rápida pero
-> no es esto.
+> Referencia entregada por Luis el 15 y el 16 de septiembre de 2026, a partir
+> del sistema actual y de FreshBooks. **Construida** el 16 de septiembre
+> (`FAC-19` a `FAC-23`). Lo que falta está al final.
 
 ## La diferencia de fondo
 
-Lo que hay hoy es un **panel lateral**: se abre sobre el listado, se llena y se
-emite. Lo que pide la referencia es una **hoja**: la pantalla se parece al
-documento que el cliente va a recibir, ocupa el ancho completo y se guarda como
-borrador antes de emitirse.
+Antes solo había un **panel lateral**: se abría sobre el listado, se llenaba y
+se emitía. Lo que pedía la referencia es una **hoja**: la pantalla se parece al
+documento que el cliente va a recibir, ocupa el ancho completo y se puede
+guardar como borrador antes de emitirse.
 
-No es lo mismo y las dos tienen sentido en momentos distintos:
+No es lo mismo y las dos tienen sentido en momentos distintos, así que están
+las dos:
 
-| | Panel lateral (lo que hay) | Hoja (lo que se pide) |
+| | Venta rápida (panel) | Hoja (pantalla) |
 |---|---|---|
-| Para qué | Vender rápido en el mostrador | Armar una factura con calma y enviarla |
+| Para qué | Vender rápido en el mostrador | Armar una factura con calma |
 | Quién | Cajero | Quien factura a crédito, a empresas |
 | Ritmo | Segundos | Minutos, con borrador |
-| Requisito | `FAC-12` (venta rápida) | `FAC-01`, `FAC-09`, `FAC-10` |
+| Requisito | `FAC-12` | `FAC-19` a `FAC-23` |
 
-**Conviene tener las dos**, no elegir. La hoja es la pantalla principal de
-Facturación; el panel se queda para la venta de mostrador.
+En el listado hay un botón para cada una. Al emitir desde el panel se abre la
+hoja de la factura recién hecha, de modo que siempre se acaba en el mismo sitio.
 
-## Lo que muestra la referencia
+## Cómo está hecha
 
-**Estructura:** hoja blanca a la izquierda ocupando casi todo el ancho, y una
-tarjeta de acciones flotante a la derecha con tres botones:
-**Enviar Factura**, **Vista Previa** y **Guardar**.
+**Una sola pantalla para escribir y para leer.** `HojaFactura.tsx` se dibuja
+entera dos veces: con controles mientras es borrador, y en texto cuando ya está
+emitida. La vista previa usa esa segunda versión, así que **lo que se revisa
+antes de mandar es exactamente lo que se manda**. Tener dos vistas distintas del
+mismo documento —una para hacerlo y otra para consultarlo— era justo la
+incoherencia que se quería quitar.
 
-**Encabezado de la hoja**
+**Los campos no se ven hasta que se tocan.** Una hoja con veinte cajas dibujadas
+se lee como un formulario; con el texto puesto donde va se lee como una factura,
+que es lo que hay que poder revisar de un vistazo.
 
-- Logo y nombre de la empresa arriba a la izquierda, con dirección y teléfono
-  debajo.
-- A la derecha: la palabra *Invoice*, el número de factura (`# 0`), **Date** y
-  **Due Date**, las dos editables.
+**Los totales los calcula el servidor mientras se escribe**, con el mismo código
+que emite (`POST /facturas/calcular`). Lo que se ve es lo que se va a cobrar.
 
-**Cuerpo**
+### Las dos vidas de una factura
 
-- **Cliente**: un desplegable, solo.
-- **Tabla de renglones** con columnas: Descripción, Costo, Cant., Tax (%),
-  Línea total, y un icono de papelera para quitar el renglón.
-  - La celda de Descripción trae **dos controles**: un desplegable de producto
-    y, debajo, un área de texto libre para describirlo.
-  - El **Tax va por renglón y es editable**, con su símbolo de porcentaje.
-- Botón **+ Add Item** debajo de la tabla.
+Mientras es **borrador** se cambia entera, no tiene número y no ha movido
+inventario: no existe para nadie más que para quien la escribe. Al **emitirse**
+saca número de la serie, descuenta la mercancía y se congela; desde ahí solo se
+cobra o se anula (`FAC-09`).
 
-**Pie**
+- Emitir un borrador **conserva su identificador**, así que un enlace abierto
+  sigue llevando al mismo documento.
+- Descartar un borrador lo borra de verdad y **no gasta número** (`ARQ-08`).
+- Los borradores **no cuentan como facturado** en el resumen del listado: la
+  cifra que se mira para saber cómo va el día no se infla con lo que todavía no
+  se ha vendido.
+- Un documento emitido no se borra. Lo impide un disparador de la base, que
+  revienta; una política de permisos habría borrado cero filas sin avisar, y un
+  borrado silencioso es peor que un error.
 
-- **Salesperson** (vendedor) a la izquierda, como campo de texto.
-- **Subtotal** y **Total** a la derecha.
-- **Nota**: área de texto al final de la hoja.
+### Lo que se añadió al modelo
 
-## Qué hay que construir
-
-| Falta | Nota |
+| Campo | Por qué |
 |---|---|
-| La hoja completa como pantalla, no como panel | Es el trabajo grueso |
-| **Guardar como borrador** | El estado `borrador` ya existe en la base y en `FAC-02`, pero no hay forma de llegar a él: hoy se emite directo |
-| **Vista previa** | Antes del PDF (`FAC-10`), sirve una vista de impresión |
-| **Enviar factura** | Necesita correo y PDF: `FAC-10` |
-| **Fecha y vencimiento editables** | Hoy la fecha es la de emisión y el vencimiento sale de los términos de pago |
-| **Vendedor** | No existe en el modelo. Hay que decidir si es texto libre o un usuario de la empresa |
-| **Nota en el documento** | El campo `notas` ya está en la tabla `documento`; falta ponerlo en pantalla |
-| **Logo y datos de la empresa en la hoja** | `EMP-01` ya guarda el logo; falta mostrarlo |
-| Área de texto libre por renglón | Hoy la descripción se copia del producto y no se puede ampliar |
+| `documento.fecha` | La fecha del documento, editable. `emitida_en` sigue siendo el sello de cuándo ocurrió: una factura fechada el día 1 puede haberse emitido el día 3, y las dos cosas son ciertas |
+| `documento.vendedor` | Texto libre, no un usuario: quien vende en el mostrador no siempre tiene cuenta, y quien la teclea ya queda en `usuario_id` |
+| `documento.referencia` | El número de orden de compra del cliente, que es lo que él busca cuando llama |
+| `documento_renglon.detalle` | La descripción ampliada: el producto dice "Torta chocolate" y el detalle dice "con el nombre en letra azul" |
 
-## Tres cosas que revisar antes de copiarlo tal cual
+### Tres cosas que se corrigieron de la referencia
 
-1. **La columna dice "Costo" pero es el precio de venta.** En el sistema actual
-   esa columna es lo que se le cobra al cliente. Llamarla costo se presta a
-   confusión justo cuando ya existe un costo de verdad en el catálogo. Debería
-   decir **Precio**.
+1. **La columna "Costo" ahora dice "Precio".** En la referencia esa columna es
+   lo que se le cobra al cliente, no lo que cuesta la mercancía. Con un costo de
+   verdad en el catálogo, el nombre viejo se prestaba a confusión.
 
-2. **El pie solo muestra Subtotal y Total.** Falta el impuesto, y `FAC-04` pide
-   que vaya desglosado —en El Álamo, estatal y municipal— porque es lo que se
-   declara. El cálculo ya lo hace; hay que mostrarlo.
+2. **El pie desglosa el impuesto.** La referencia solo mostraba Subtotal y
+   Total; `FAC-04` pide estatal y municipal por separado, porque es lo que se
+   declara. El cálculo ya existía y ahora se ve.
 
-3. **No hay descuento en la referencia.** El sistema ya calcula descuento por
-   renglón y global. Si de verdad no se usan, se pueden esconder; si se usan,
-   la hoja tiene que tener dónde ponerlos.
+3. **El descuento está en la hoja.** No aparecía en la referencia, pero el
+   sistema lo calcula por renglón y global desde el principio. Va escondido
+   detrás de un enlace —"Agregar un descuento"— para no ensuciar la hoja de
+   quien no lo usa.
 
-## Por dónde empezar
+### Y una que se descubrió construyendo
 
-1. La hoja con lo que ya existe: encabezado con datos de la empresa, cliente,
-   renglones, nota, y el pie con el desglose del impuesto.
-2. Guardar como borrador y volver a abrirlo.
-3. Vista previa imprimible, que es la base del PDF.
-4. Vendedor, y fecha y vencimiento editables.
-5. Enviar por correo, ya con el PDF (`FAC-10`).
+Al empleado de **mostrador** se le pedía facturar pero no se le dejaba ver el
+catálogo, así que el desplegable de productos le salía vacío: no podía vender.
+Ver la lista de productos es ahora un permiso propio (`productos.ver`,
+`ROL-11`), separado de ver suplidores, categorías y costos.
+
+## Lo que falta
+
+| Falta | Requisito |
+|---|---|
+| PDF con la marca de la empresa y envío por correo | `FAC-10` |
+| Enlace público de solo lectura para el cliente | `FAC-10` |
+| Impresión en recibo térmico de 80 mm | `FAC-11` |
+| Subir el logotipo de la empresa (la hoja ya lo dibuja si existe) | `EMP-01` |
+| Crear un cliente sin salir de la hoja | `CLI-02` |
+| Nota de crédito y devolución parcial | `FAC-14` |
+
+La vista previa ya imprime con los estilos de impresión puestos, así que es la
+base sobre la que se hará el PDF.
+
+## Cómo se probó
+
+- `api/tests/Feature/Facturacion/BorradorFacturaTest.php`: la vida entera del
+  borrador, el aislamiento entre empresas y los permisos.
+- `node api/tests/navegador/revisar-hoja-factura.mjs`: 46 revisiones en un
+  navegador real, de la hoja en blanco a la factura anulada, con capturas.
+- `node api/tests/navegador/revisar-facturacion.mjs`: la venta rápida, que
+  sigue funcionando y acaba en la hoja.

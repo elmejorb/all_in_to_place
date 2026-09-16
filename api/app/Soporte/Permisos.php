@@ -14,6 +14,11 @@ final class Permisos
 {
     // Catálogo: suplidores, categorías, productos.
     public const CATALOGO_VER = 'catalogo.ver';
+
+    // Ver la lista de productos con su precio es otra cosa que ver el catálogo
+    // entero. Quien está en el mostrador lo necesita —no se puede vender lo que
+    // no se puede buscar— pero no tiene por qué ver suplidores ni costos.
+    public const PRODUCTOS_VER = 'productos.ver';
     public const CATALOGO_EDITAR = 'catalogo.editar';
     public const CATALOGO_DESACTIVAR = 'catalogo.desactivar';
 
@@ -36,19 +41,19 @@ final class Permisos
     /** @var array<string, list<string>> */
     private const MATRIZ = [
         'propietario' => [
-            self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
+            self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER, self::EMPRESA_CONFIGURAR, self::USUARIOS_GESTIONAR,
         ],
         'administrador' => [
-            self::CATALOGO_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
+            self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER, self::USUARIOS_GESTIONAR,
         ],
         'gerente' => [
-            self::CATALOGO_VER, self::CATALOGO_EDITAR,
+            self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
             self::COSTOS_VER,
@@ -56,14 +61,14 @@ final class Permisos
         // El de almacén ve el catálogo; el de mostrador ve y crea clientes,
         // porque sin eso no puede facturar (ROL-08, CLI-02).
         'empleado' => [
-            self::CATALOGO_VER,
+            self::CATALOGO_VER, self::PRODUCTOS_VER,
             self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR,
         ],
         'contratista' => [
             self::CLIENTES_VER,
         ],
         'contador' => [
-            self::CATALOGO_VER, self::CLIENTES_VER, self::COSTOS_VER,
+            self::CATALOGO_VER, self::PRODUCTOS_VER, self::CLIENTES_VER, self::COSTOS_VER,
         ],
     ];
 

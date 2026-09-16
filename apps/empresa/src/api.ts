@@ -268,6 +268,32 @@ export type Cliente = {
 
 export type ListadoClientes = Listado<Cliente> & { tipos: string[] };
 
+/** Los datos de la empresa tal como salen impresos en la hoja de factura. */
+export type Membrete = {
+  id: string;
+  nombre: string;
+  nombre_legal: string;
+  registro_comerciante: string | null;
+  telefono: string | null;
+  email: string | null;
+  direccion: string | null;
+  pais: string;
+  moneda: string;
+  logo: string | null;
+  impuesto_desglose: { nombre: string; tasa: string }[];
+  impuesto_tasa: string;
+  serie: { nombre: string; proximo_folio: string };
+};
+
+export type RenglonCalculado = {
+  bruto: string;
+  descuento: string;
+  base: string;
+  impuesto: string;
+  tasa: string;
+  total: string;
+};
+
 export type Calculo = {
   subtotal: string;
   descuento: string;
@@ -275,6 +301,7 @@ export type Calculo = {
   impuesto: string;
   total: string;
   desglose: { nombre: string; monto: string }[];
+  renglones: RenglonCalculado[];
 };
 
 export type FacturaResumen = {
@@ -282,6 +309,7 @@ export type FacturaResumen = {
   folio: string | null;
   estado: string;
   cliente: string | null;
+  fecha: string | null;
   emitida_en: string | null;
   vence_el: string | null;
   total: string;
@@ -292,22 +320,34 @@ export type FacturaResumen = {
 export type FacturaDetalle = FacturaResumen & {
   subtotal: string;
   descuento: string;
+  descuento_tipo: string | null;
+  descuento_valor: string | null;
   base: string;
   impuesto: string;
   desglose: { nombre: string; monto: string }[];
+  cliente_id: string | null;
   cliente_exento: boolean;
+  vendedor: string | null;
+  referencia: string | null;
   terminos_pago: string | null;
   notas: string | null;
   motivo_anulacion: string | null;
   emitida_por: string | null;
+  /** Solo un borrador se reescribe; lo emitido se anula (FAC-09). */
+  editable: boolean;
   renglones: {
     id: string;
+    producto: string | null;
     descripcion: string;
+    detalle: string | null;
     sku: string | null;
     cantidad: number;
     unidad: string;
     precio: string;
+    tasa: string;
     descuento: string;
+    descuento_tipo: string | null;
+    descuento_valor: string | null;
     impuesto: string;
     total: string;
   }[];
@@ -318,7 +358,7 @@ export type ListadoFacturas = {
   datos: FacturaResumen[];
   siguiente: string | null;
   anterior: string | null;
-  resumen: { cantidad: number; total: string; pagado: string; por_cobrar: string };
+  resumen: { cantidad: number; total: string; pagado: string; por_cobrar: string; borradores: number };
   metodos_pago: string[];
   permisos: { facturar: boolean; anular: boolean };
 };

@@ -93,8 +93,13 @@ node api/tests/navegador/revisar-categorias.mjs   # categorías, etiquetas y bor
 node api/tests/navegador/revisar-productos.mjs    # catálogo, márgenes y ajustes
 node api/tests/navegador/revisar-importacion.mjs  # importar y exportar por CSV
 node api/tests/navegador/revisar-clientes.mjs     # clientes, exención y crédito
-node api/tests/navegador/revisar-facturacion.mjs  # vender, cobrar y anular
+node api/tests/navegador/revisar-facturacion.mjs  # venta rápida de mostrador
+node api/tests/navegador/revisar-hoja-factura.mjs # borrador, vista previa, emitir y anular
 ```
+
+Los dos últimos necesitan las dos aplicaciones andando y no dependen de cuántas
+veces se haya sembrado la base: comparan contra lo que había antes, no contra
+números fijos.
 
 Las capturas quedan en `api/tests/navegador/capturas/`. Son la evidencia que pide
 `CAL-04`: cada componente se cierra con la pantalla funcionando.
