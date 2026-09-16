@@ -6,9 +6,12 @@ import {
   type Calculo,
   type Cliente,
   type FacturaDetalle,
+  type ListadoClientes,
+  type ListadoProductos,
   type Membrete,
   type Producto,
 } from "../api";
+import { CREAR, CrearCliente, CrearProducto } from "./CrearAlVuelo";
 
 type RenglonHoja = {
   clave: number;
@@ -67,6 +70,12 @@ export function HojaFactura({
   const [membrete, setMembrete] = useState<Membrete | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [unidades, setUnidades] = useState<string[]>([]);
+  // Quién puede dar de alta sin salir de la factura. El servidor lo vuelve a
+  // comprobar en cada petición: esto solo decide si se ofrece (ROL-03).
+  const [puedeCrear, setPuedeCrear] = useState({ cliente: false, producto: false });
+  /** Qué se está dando de alta: el cliente, o el producto de un renglón. */
+  const [creando, setCreando] = useState<{ que: "cliente" } | { que: "producto"; clave: number } | null>(null);
   const [documento, setDocumento] = useState<FacturaDetalle | null>(null);
   const [documentoId, setDocumentoId] = useState<string | null>(id);
 
@@ -146,14 +155,16 @@ export function HojaFactura({
       try {
         const [m, c, p] = await Promise.all([
           api.get<Membrete>("/empresa"),
-          api.get<{ datos: Cliente[] }>("/clientes?por_pagina=100"),
-          api.get<{ datos: Producto[] }>("/productos?por_pagina=100"),
+          api.get<ListadoClientes>("/clientes?por_pagina=100"),
+          api.get<ListadoProductos>("/productos?por_pagina=100"),
         ]);
         if (!vigente) return;
 
         setMembrete(m);
         setClientes(c.datos);
         setProductos(p.datos);
+        setUnidades(p.unidades);
+        setPuedeCrear({ cliente: c.permisos.editar, producto: p.permisos.editar });
 
         if (id) {
           const factura = await api.get<FacturaDetalle>(`/facturas/${id}`);
@@ -434,13 +445,22 @@ export function HojaFactura({
           {escribible ? (
             <>
               <label htmlFor="hoja-cliente">Facturar a</label>
-              <select id="hoja-cliente" value={cliente} onChange={(e) => setCliente(e.target.value)}>
+              <select
+                id="hoja-cliente"
+                value={cliente}
+                onChange={(e) =>
+                  // Elegir "crear" no cambia el valor: abre el diálogo y el
+                  // desplegable vuelve solo a lo que estaba.
+                  e.target.value === CREAR ? setCreando({ que: "cliente" }) : setCliente(e.target.value)
+                }
+              >
                 <option value="">Cliente de mostrador</option>
                 {clientes.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre}{c.exento ? " (exento)" : ""}
                   </option>
                 ))}
+                {puedeCrear.cliente && <option value={CREAR}>+ Crear un cliente...</option>}
               </select>
             </>
           ) : (
@@ -536,12 +556,17 @@ export function HojaFactura({
                             id={`producto-${i}`}
                             aria-label={`Producto del renglón ${i + 1}`}
                             value={r.producto}
-                            onChange={(e) => cambiar(r.clave, "producto", e.target.value)}
+                            onChange={(e) =>
+                              e.target.value === CREAR
+                                ? setCreando({ que: "producto", clave: r.clave })
+                                : cambiar(r.clave, "producto", e.target.value)
+                            }
                           >
                             <option value="">Escribir a mano</option>
                             {productos.map((p) => (
                               <option key={p.id} value={p.id}>{p.nombre}</option>
                             ))}
+                            {puedeCrear.producto && <option value={CREAR}>+ Crear un producto...</option>}
                           </select>
 
                           {!r.producto && (
@@ -961,6 +986,42 @@ export function HojaFactura({
           )}
         </div>
       </aside>
+
+      {creando?.que === "cliente" && (
+        <CrearCliente
+          alCerrar={() => setCreando(null)}
+          alCrear={(nuevo) => {
+            setClientes((actuales) => [...actuales, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+            setCliente(nuevo.id);
+            setCreando(null);
+            avisar(`${nuevo.nombre} creado y puesto en la factura.`);
+          }}
+        />
+      )}
+
+      {creando?.que === "producto" && (
+        <CrearProducto
+          impuestoPorDefecto={membrete?.impuesto_tasa ?? ""}
+          unidades={unidades}
+          alCerrar={() => setCreando(null)}
+          alCrear={(nuevo) => {
+            setProductos((actuales) => [...actuales, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+
+            // Se rellena el renglón con los datos del producto recién creado,
+            // no buscándolo en la lista: en este instante la lista todavía es
+            // la de antes y no lo encontraría.
+            setRenglones((actuales) =>
+              actuales.map((r) =>
+                r.clave === creando.clave
+                  ? { ...r, producto: nuevo.id, descripcion: nuevo.nombre, precio: nuevo.precio, impuesto: nuevo.impuesto }
+                  : r,
+              ),
+            );
+            setCreando(null);
+            avisar(`${nuevo.nombre} creado y puesto en el renglón.`);
+          }}
+        />
+      )}
 
       {previa && (
         <div className="previa-velo" role="dialog" aria-label="Vista previa de la factura">

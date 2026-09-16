@@ -137,6 +137,7 @@ Los once módulos funcionales de la aplicación que usan las empresas.
 | FAC-21 | MVP | Fecha del documento y vencimiento editables, independientes del momento en que se emite, que queda registrado aparte. |
 | FAC-22 | MVP | Vendedor y referencia del cliente (número de orden de compra) en la factura, y detalle libre por renglón. |
 | FAC-23 | MVP | Vista previa imprimible antes de emitir: lo que se revisa es exactamente lo que se imprime. |
+| FAC-24 | MVP | Los desplegables de cliente y de producto ofrecen crearlo al final, en un formulario corto que no obliga a salir de la factura. Se ofrece según el permiso de cada rol. |
 
 ## 5.9 Hoja de Cuadre (cierre de caja)
 

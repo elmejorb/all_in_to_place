@@ -123,6 +123,7 @@ FAC-20,Facturacion,MVP,05-app-empresa.md,"Guardar sin emitir: el borrador no sac
 FAC-21,Facturacion,MVP,05-app-empresa.md,"Fecha del documento y vencimiento editables, independientes del momento en que se emite, que queda registrado aparte."
 FAC-22,Facturacion,MVP,05-app-empresa.md,"Vendedor y referencia del cliente (número de orden de compra) en la factura, y detalle libre por renglón."
 FAC-23,Facturacion,MVP,05-app-empresa.md,"Vista previa imprimible antes de emitir: lo que se revisa es exactamente lo que se imprime."
+FAC-24,Facturacion,MVP,05-app-empresa.md,"Los desplegables de cliente y de producto ofrecen crearlo al final, en un formulario corto que no obliga a salir de la factura. Se ofrece según el permiso de cada rol."
 CAJ-01,Hoja de Cuadre,MVP,05-app-empresa.md,"Apertura de turno por usuario y sucursal, con fondo inicial declarado. No se puede facturar en efectivo sin turno abierto."
 CAJ-02,Hoja de Cuadre,MVP,05-app-empresa.md,"Cierre que compara, por método de pago, lo esperado según las ventas del turno contra lo declarado por el cajero."
 CAJ-03,Hoja de Cuadre,MVP,05-app-empresa.md,"Conteo de efectivo con desglose opcional por denominación, que suma automáticamente."

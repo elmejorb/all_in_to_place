@@ -765,3 +765,66 @@ table.tabla--previa td { vertical-align: top; padding-top: var(--e2); padding-bo
 
 .faltantes { display: flex; flex-direction: column; gap: var(--e2); align-items: flex-start; }
 .faltantes ul { margin: var(--e1) 0 0; padding-left: var(--e4); }
+
+/* --- diálogo -------------------------------------------------------------
+   Una caja corta que interrumpe otro trabajo sin taparlo del todo: se usa para
+   dar de alta un cliente o un producto sin salir de la factura. Va por encima
+   del panel lateral, porque puede abrirse desde dentro de él. */
+
+.dialogo { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: var(--e4); }
+.dialogo__fondo { position: absolute; inset: 0; background: rgba(7, 20, 18, .5); border: 0; }
+
+.dialogo__caja {
+  position: relative;
+  width: min(26rem, 100%);
+  max-height: calc(100vh - 2 * var(--e4));
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-flotante);
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogo__cabeza {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.dialogo__cabeza h2 { font-size: var(--t-medio); }
+.dialogo__cabeza p { margin: 0; color: var(--tenue); font-size: var(--t-menor); }
+
+.dialogo__cerrar {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--tenue);
+  font-size: var(--t-mayor);
+  line-height: 1;
+  cursor: pointer;
+  padding: var(--e1);
+  border-radius: var(--radio-menor);
+}
+.dialogo__cerrar:hover { background: var(--superficie-3); color: var(--texto); }
+
+.dialogo__cuerpo {
+  padding: var(--e4);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.dialogo__pie {
+  padding: var(--e3) var(--e4);
+  border-top: 1px solid var(--borde);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--e2);
+}
+
+/* Dos campos cortos en una fila: precio y unidad, por ejemplo. */
+.dialogo__par { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e3); }

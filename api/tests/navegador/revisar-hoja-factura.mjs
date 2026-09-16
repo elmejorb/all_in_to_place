@@ -8,7 +8,7 @@
  * Uso: node api/tests/navegador/revisar-hoja-factura.mjs
  */
 import { chromium } from "playwright";
-import { capturar, contraste, crearRevisor, entrar, irA, vigilar } from "./_ayudas.mjs";
+import { capturar, contraste, crearRevisor, entrar, irA, salir, vigilar } from "./_ayudas.mjs";
 
 const { revisar, cerrar } = crearRevisor();
 const navegador = await chromium.launch();
@@ -272,6 +272,76 @@ try {
     `Descartar un borrador lo quita del listado (${filasAntes} filas)`,
     (await pagina.locator("table.tabla tbody tr").count()) === filasAntes,
   );
+
+  // --- dar de alta sin salir de la factura ----------------------------------
+  await irA(pagina, "Facturas");
+  await pagina.getByRole("button", { name: "Nueva factura" }).click();
+  await pagina.waitForSelector(".hoja");
+
+  await pagina.selectOption("#hoja-cliente", "__crear__");
+  await pagina.waitForSelector(".dialogo");
+  await capturar(pagina, "129-alta-de-cliente");
+  revisar(
+    "El desplegable de cliente ofrece crear uno",
+    (await pagina.locator(".dialogo").innerText()).includes("Cliente nuevo"),
+  );
+
+  await pagina.fill("#vuelo-cliente-nombre", "Repostería La Esquina");
+  await pagina.fill("#vuelo-cliente-telefono", "787-555-0100");
+  await pagina.getByRole("button", { name: "Crear y usarlo" }).click();
+  await pagina.waitForSelector(".dialogo", { state: "detached" });
+  revisar(
+    "Al crearlo queda puesto en la factura",
+    (await pagina.locator("#hoja-cliente option:checked").innerText()).includes("La Esquina"),
+  );
+
+  await pagina.selectOption("#producto-0", "__crear__");
+  await pagina.waitForSelector(".dialogo");
+  await pagina.fill("#vuelo-producto-nombre", "Bandeja de quesitos");
+  await pagina.fill("#vuelo-producto-precio", "18.00");
+  await pagina.fill("#vuelo-producto-existencia", "12");
+  await capturar(pagina, "130-alta-de-producto");
+  await pagina.getByRole("button", { name: "Crear y usarlo" }).click();
+  await pagina.waitForSelector(".dialogo", { state: "detached" });
+  await esperarTotal(pagina, "20.07");
+
+  revisar(
+    "El renglón ofrece crear un producto y lo deja elegido",
+    (await pagina.locator("#producto-0 option:checked").innerText()).includes("quesitos"),
+  );
+  revisar("Con su precio", (await pagina.inputValue("#precio-0")) === "18.00");
+  revisar("Y con la tasa de la empresa", (await pagina.inputValue("#impuesto-0")) === "11.5");
+  revisar(
+    "Y los totales lo recogen enseguida",
+    (await pagina.locator("#totales-hoja").innerText()).includes("20.07"),
+  );
+
+  // Un borrador nuevo sin guardar: se sale sin dejar rastro.
+  pagina.once("dialog", (d) => d.accept());
+  await pagina.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await pagina.waitForSelector("table.tabla");
+
+  // --- quién puede dar de alta qué ------------------------------------------
+  await salir(pagina);
+  await entrar(pagina, "emily@elalamo.test");   // mostrador
+  await irA(pagina, "Facturas");
+  await pagina.getByRole("button", { name: "Nueva factura" }).click();
+  await pagina.waitForSelector(".hoja");
+
+  revisar(
+    "La cajera puede crear un cliente al vuelo (CLI-02)",
+    (await pagina.locator("#hoja-cliente").innerText()).includes("Crear un cliente"),
+  );
+  revisar(
+    "Pero no un producto, que no administra el catálogo",
+    !(await pagina.locator("#producto-0").innerText()).includes("Crear un producto"),
+  );
+
+  pagina.once("dialog", (d) => d.accept());
+  await pagina.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await pagina.waitForSelector("table.tabla");
+  await salir(pagina);
+  await entrar(pagina, "pedro@elalamo.test");
 
   // --- la mercancía se movió una sola vez -----------------------------------
   const tortasDespues = await existenciaDe(pagina, "Torta");

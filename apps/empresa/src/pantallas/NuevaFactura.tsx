@@ -6,8 +6,11 @@ import {
   type Calculo,
   type Cliente,
   type FacturaDetalle,
+  type ListadoClientes,
+  type ListadoProductos,
   type Producto,
 } from "../api";
+import { CREAR, CrearCliente, CrearProducto } from "./CrearAlVuelo";
 
 type Renglon = {
   clave: number;
@@ -55,16 +58,33 @@ export function NuevaFactura({
   const [emitiendo, setEmitiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [faltantes, setFaltantes] = useState<{ producto: string; pedido: number; disponible: number }[]>([]);
+  const [unidades, setUnidades] = useState<string[]>([]);
+  const [tasaEmpresa, setTasaEmpresa] = useState("");
+  const [puedeCrear, setPuedeCrear] = useState({ cliente: false, producto: false });
+  /** Qué se está dando de alta sin salir del mostrador. */
+  const [creando, setCreando] = useState<{ que: "cliente" } | { que: "producto"; clave: number } | null>(null);
 
   useEffect(() => {
+    let vigente = true;
+
     void (async () => {
-      const [c, p] = await Promise.all([
-        api.get<{ datos: Cliente[] }>("/clientes?por_pagina=100"),
-        api.get<{ datos: Producto[] }>("/productos?por_pagina=100"),
+      const [c, p, m] = await Promise.all([
+        api.get<ListadoClientes>("/clientes?por_pagina=100"),
+        api.get<ListadoProductos>("/productos?por_pagina=100"),
+        api.get<{ impuesto_tasa: string }>("/empresa"),
       ]);
+      if (!vigente) return;
+
       setClientes(c.datos);
       setProductos(p.datos);
+      setUnidades(p.unidades);
+      setTasaEmpresa(m.impuesto_tasa);
+      setPuedeCrear({ cliente: c.permisos.editar, producto: p.permisos.editar });
     })().catch(() => undefined);
+
+    return () => {
+      vigente = false;
+    };
   }, []);
 
   const listos = useMemo(
@@ -205,13 +225,20 @@ export function NuevaFactura({
 
       <div className="campo">
         <label htmlFor="cliente">Cliente</label>
-        <select id="cliente" value={cliente} onChange={(e) => setCliente(e.target.value)}>
+        <select
+          id="cliente"
+          value={cliente}
+          onChange={(e) =>
+            e.target.value === CREAR ? setCreando({ que: "cliente" }) : setCliente(e.target.value)
+          }
+        >
           <option value="">Sin cliente (venta de mostrador)</option>
           {clientes.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nombre}{c.exento ? " (exento)" : ""}
             </option>
           ))}
+          {puedeCrear.cliente && <option value={CREAR}>+ Crear un cliente...</option>}
         </select>
       </div>
 
@@ -223,12 +250,17 @@ export function NuevaFactura({
               <select
                 id={`producto-${i}`}
                 value={r.producto}
-                onChange={(e) => cambiar(r.clave, "producto", e.target.value)}
+                onChange={(e) =>
+                  e.target.value === CREAR
+                    ? setCreando({ que: "producto", clave: r.clave })
+                    : cambiar(r.clave, "producto", e.target.value)
+                }
               >
                 <option value="">Texto libre</option>
                 {productos.map((p) => (
                   <option key={p.id} value={p.id}>{p.nombre}</option>
                 ))}
+                {puedeCrear.producto && <option value={CREAR}>+ Crear un producto...</option>}
               </select>
             </div>
 
@@ -343,6 +375,38 @@ export function NuevaFactura({
             </>
           )}
         </div>
+      )}
+      {creando?.que === "cliente" && (
+        <CrearCliente
+          alCerrar={() => setCreando(null)}
+          alCrear={(nuevo) => {
+            setClientes((actuales) => [...actuales, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+            setCliente(nuevo.id);
+            setCreando(null);
+          }}
+        />
+      )}
+
+      {creando?.que === "producto" && (
+        <CrearProducto
+          impuestoPorDefecto={tasaEmpresa}
+          unidades={unidades}
+          alCerrar={() => setCreando(null)}
+          alCrear={(nuevo) => {
+            setProductos((actuales) => [...actuales, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+
+            // Con los datos del producto recién creado: en este instante la
+            // lista todavía es la de antes y no lo encontraría.
+            setRenglones((actuales) =>
+              actuales.map((r) =>
+                r.clave === creando.clave
+                  ? { ...r, producto: nuevo.id, descripcion: nuevo.nombre, precio: nuevo.precio }
+                  : r,
+              ),
+            );
+            setCreando(null);
+          }}
+        />
       )}
     </PanelLateral>
   );

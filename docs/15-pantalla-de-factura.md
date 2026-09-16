@@ -2,7 +2,7 @@
 
 > Referencia entregada por Luis el 15 y el 16 de septiembre de 2026, a partir
 > del sistema actual y de FreshBooks. **Construida** el 16 de septiembre
-> (`FAC-19` a `FAC-23`). Lo que falta está al final.
+> (`FAC-19` a `FAC-24`). Lo que falta está al final.
 
 ## La diferencia de fondo
 
@@ -19,7 +19,7 @@ las dos:
 | Para qué | Vender rápido en el mostrador | Armar una factura con calma |
 | Quién | Cajero | Quien factura a crédito, a empresas |
 | Ritmo | Segundos | Minutos, con borrador |
-| Requisito | `FAC-12` | `FAC-19` a `FAC-23` |
+| Requisito | `FAC-12` | `FAC-19` a `FAC-24` |
 
 En el listado hay un botón para cada una. Al emitir desde el panel se abre la
 hoja de la factura recién hecha, de modo que siempre se acaba en el mismo sitio.
@@ -66,6 +66,23 @@ cobra o se anula (`FAC-09`).
 | `documento.referencia` | El número de orden de compra del cliente, que es lo que él busca cuando llama |
 | `documento_renglon.detalle` | La descripción ampliada: el producto dice "Torta chocolate" y el detalle dice "con el nombre en letra azul" |
 
+### Dar de alta sin salir de la factura
+
+Al final de los desplegables de cliente y de producto hay una opción para
+crearlo. El caso es frecuente: llega alguien que nunca ha comprado, o hay que
+cobrar algo que no está en el catálogo. Obligar a abandonar la factura a medias
+para ir a otra pantalla es perder el hilo y, a veces, perder la venta.
+
+Los dos formularios piden **lo mínimo** para poder facturar, que es lo mismo que
+exige el servidor: un nombre. Lo demás —identificación, crédito, exención,
+categoría, costos— se completa después en su pantalla. Repetir aquí la ficha
+entera habría convertido un atajo en otro formulario.
+
+La opción se ofrece según el permiso, y el servidor lo vuelve a comprobar
+(`ROL-03`): la cajera puede crear un cliente (`CLI-02`) pero no un producto,
+porque no administra el catálogo. Está también en la venta rápida, que es donde
+más falta hace.
+
 ### Tres cosas que se corrigieron de la referencia
 
 1. **La columna "Costo" ahora dice "Precio".** En la referencia esa columna es
@@ -96,7 +113,6 @@ Ver la lista de productos es ahora un permiso propio (`productos.ver`,
 | Enlace público de solo lectura para el cliente | `FAC-10` |
 | Impresión en recibo térmico de 80 mm | `FAC-11` |
 | Subir el logotipo de la empresa (la hoja ya lo dibuja si existe) | `EMP-01` |
-| Crear un cliente sin salir de la hoja | `CLI-02` |
 | Nota de crédito y devolución parcial | `FAC-14` |
 
 La vista previa ya imprime con los estilos de impresión puestos, así que es la
@@ -106,7 +122,7 @@ base sobre la que se hará el PDF.
 
 - `api/tests/Feature/Facturacion/BorradorFacturaTest.php`: la vida entera del
   borrador, el aislamiento entre empresas y los permisos.
-- `node api/tests/navegador/revisar-hoja-factura.mjs`: 46 revisiones en un
+- `node api/tests/navegador/revisar-hoja-factura.mjs`: 54 revisiones en un
   navegador real, de la hoja en blanco a la factura anulada, con capturas.
 - `node api/tests/navegador/revisar-facturacion.mjs`: la venta rápida, que
   sigue funcionando y acaba en la hoja.
