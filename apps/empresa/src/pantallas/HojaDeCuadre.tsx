@@ -5,6 +5,7 @@ import {
   api,
   aTexto,
   descargar,
+  enDinero,
   ErrorApi,
   type CuadreDetalle,
   type FacturadoEnTurno,
@@ -117,17 +118,20 @@ export function HojaDeCuadre({
     };
   }, [fecha, turno]);
 
+  // La misma aritmética que `App\Domain\Cuadre`, comprobada contra el sistema
+  // actual. El servidor recalcula al guardar y su respuesta pisa esto.
   const totales = useMemo(() => {
     const ventaYCambio = aCentavos(inicial) + aCentavos(lectura);
-    const totalEfectivo = ventaYCambio - aCentavos(tarjeta) - aCentavos(athMovil) - aCentavos(cambio);
+    const totalEfectivo = ventaYCambio - aCentavos(cambio);
     const totalGastos = gastos.reduce((suma, g) => suma + aCentavos(g.monto), 0);
+    const aDepositar = totalEfectivo - totalGastos;
 
     return {
       ventaYCambio,
       totalEfectivo,
       totalGastos,
-      aDepositar: totalEfectivo - totalGastos,
-      totalVentas: aCentavos(lectura),
+      aDepositar,
+      totalVentas: aDepositar + aCentavos(tarjeta) + aCentavos(athMovil),
     };
   }, [inicial, lectura, cambio, tarjeta, athMovil, gastos]);
 
@@ -157,7 +161,7 @@ export function HojaDeCuadre({
       // La respuesta del servidor pisa lo que hay en pantalla: él es quien
       // manda sobre los números.
       rellenar(h);
-      avisar(`Hoja del ${h.fecha} ${h.turno.toUpperCase()} guardada. A depositar ${h.a_depositar}.`);
+      avisar(`Hoja del ${h.fecha} ${h.turno.toUpperCase()} guardada. A depositar ${enDinero(h.a_depositar)}.`);
       await alGuardar();
     } catch (e) {
       setError(e as ErrorApi);
@@ -180,8 +184,8 @@ export function HojaDeCuadre({
 
     return (
       <small className="contraste" data-cuadra={diferencia === 0}>
-        El sistema facturó {delSistema}
-        {diferencia !== 0 && <b> · {diferencia > 0 ? "+" : "−"}{aTexto(Math.abs(diferencia))}</b>}
+        El sistema facturó {enDinero(delSistema)}
+        {diferencia !== 0 && <b> · {diferencia > 0 ? "+" : "−"}{enDinero(aTexto(Math.abs(diferencia)))}</b>}
       </small>
     );
   }
@@ -250,7 +254,7 @@ export function HojaDeCuadre({
             </div>
 
             <div className="campo">
-              <label htmlFor="ventas_lectura">Ventas (según lectura)</label>
+              <label htmlFor="ventas_lectura">Ventas en efectivo (según lectura)</label>
               <input
                 id="ventas_lectura"
                 inputMode="decimal"
@@ -259,12 +263,12 @@ export function HojaDeCuadre({
                 disabled={soloLectura}
                 onChange={(e) => setLectura(e.target.value)}
               />
-              {contraste(lectura, facturado?.ventas)}
+              {contraste(lectura, facturado?.efectivo)}
             </div>
 
             <div className="cuadre__calculado">
               <span>Total venta y cambio</span>
-              <b className="numerica" id="venta-y-cambio">{aTexto(totales.ventaYCambio)}</b>
+              <b className="numerica" id="venta-y-cambio">{enDinero(aTexto(totales.ventaYCambio))}</b>
             </div>
 
             <div className="campo">
@@ -282,7 +286,7 @@ export function HojaDeCuadre({
 
             <div className="cuadre__calculado" data-fuerte="true">
               <span>Total efectivo</span>
-              <b className="numerica" id="total-efectivo">{aTexto(totales.totalEfectivo)}</b>
+              <b className="numerica" id="total-efectivo">{enDinero(aTexto(totales.totalEfectivo))}</b>
             </div>
           </div>
 
@@ -329,8 +333,8 @@ export function HojaDeCuadre({
 
             {facturado && (
               <div className="cuadre__nota-sistema" id="ventana-turno">
-                <b>{facturado.facturas} factura(s)</b> emitidas entre las {facturado.desde} y las{" "}
-                {facturado.hasta}, por {facturado.ventas}.
+                <b>{facturado.facturas} factura(s)</b> entre las {facturado.desde} y las {facturado.hasta},
+                por {enDinero(facturado.ventas)} en total.
               </div>
             )}
           </div>
@@ -416,15 +420,15 @@ export function HojaDeCuadre({
             <div className="totales-hoja__linea">
               <dt>Total de compras y gastos</dt>
               {/* Un cero no lleva signo: "−0.00" se lee como un descuido. */}
-              <dd>{totales.totalGastos > 0 ? "−" : ""}{aTexto(totales.totalGastos)}</dd>
+              <dd>{totales.totalGastos > 0 ? "−" : ""}{enDinero(aTexto(totales.totalGastos))}</dd>
             </div>
             <div className="totales-hoja__linea" data-total="true" data-alerta={totales.aDepositar < 0}>
               <dt>Efectivo para depositar</dt>
-              <dd>{aTexto(totales.aDepositar)}</dd>
+              <dd>{enDinero(aTexto(totales.aDepositar))}</dd>
             </div>
             <div className="totales-hoja__linea">
               <dt>Total ventas</dt>
-              <dd>{aTexto(totales.totalVentas)}</dd>
+              <dd>{enDinero(aTexto(totales.totalVentas))}</dd>
             </div>
           </dl>
         </section>

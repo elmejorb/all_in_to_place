@@ -11,15 +11,21 @@ namespace App\Domain;
  * se gastó. De ahí sale cuánto efectivo se deposita.
  *
  *   Total venta y cambio = efectivo al comienzo + ventas según lectura
- *   Total efectivo       = total venta y cambio − tarjeta − ATH Móvil − cambio
+ *   Total efectivo       = total venta y cambio − efectivo para cambio
  *   Gastos               = suma de compras y gastos
  *   A depositar          = total efectivo − gastos
+ *   Total ventas         = a depositar + tarjeta + ATH Móvil
  *
- * **La lectura es el total del turno, con tarjeta incluida**, que es por lo que
- * se resta lo cobrado con tarjeta y con ATH Móvil para llegar al efectivo que
- * debe haber en la gaveta. Si en la panadería la lectura viniera ya solo de
- * efectivo, habría que dejar de restarlas: es la única línea que cambiaría.
- * Está pendiente de confirmar con quien cuadra la caja (docs/16).
+ * **La lectura es solo el efectivo.** Lo cobrado con tarjeta y con ATH Móvil va
+ * aparte y no se resta de la gaveta: se suma al final para llegar al total
+ * vendido. Las fórmulas están comprobadas contra el sistema actual con las
+ * cifras que hay en `CuadreTest`, así que una hoja hecha aquí da exactamente lo
+ * mismo que la de allá.
+ *
+ * Un apunte que conviene tener presente: el *total de ventas* así calculado
+ * arrastra el fondo de cambio del comienzo y descuenta los gastos, de modo que
+ * no coincide con la suma limpia de lo vendido. Se reproduce tal cual porque es
+ * la cifra con la que la panadería lleva años comparando (docs/16).
  *
  * Todo en centavos enteros (ARQ-09). Los resultados pueden salir negativos y
  * se devuelven tal cual: un depósito en negativo es justo lo que hay que ver.
@@ -40,17 +46,17 @@ final class Cuadre
         $athMovil = (int) ($hoja['ath_movil'] ?? 0);
 
         $ventaYCambio = $inicial + $lectura;
-        $totalEfectivo = $ventaYCambio - $tarjeta - $athMovil - $cambio;
+        $totalEfectivo = $ventaYCambio - $cambio;
         $totalGastos = array_sum(array_map('intval', $gastos));
+        $aDepositar = $totalEfectivo - $totalGastos;
 
         return [
             'venta_y_cambio' => $ventaYCambio,
             'total_efectivo' => $totalEfectivo,
             'gastos' => $totalGastos,
-            'a_depositar' => $totalEfectivo - $totalGastos,
-            // Lo vendido en el turno, sin el fondo de cambio: es la cifra del
-            // negocio, no la de la gaveta.
-            'total_ventas' => $lectura,
+            'a_depositar' => $aDepositar,
+            // Lo que se deposita más lo que no pasó por la gaveta.
+            'total_ventas' => $aDepositar + $tarjeta + $athMovil,
         ];
     }
 

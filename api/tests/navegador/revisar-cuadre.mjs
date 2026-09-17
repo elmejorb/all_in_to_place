@@ -93,18 +93,20 @@ try {
     await pagina.getByRole("button", { name: "Imprimir PDF" }).isDisabled(),
   );
 
+  // Las mismas cifras con las que Luis enseñó los cálculos del sistema actual:
+  // si esto cuadra, una hoja hecha aquí da lo mismo que una hecha allá.
   await escribirTurno(pagina, {
-    inicial: "100.00",
-    lectura: "200.00",     // a propósito distinto de lo facturado
-    cambio: "100.00",
-    tarjeta: "0",
-    athMovil: "0",
+    inicial: "5000.00",
+    lectura: "150000.00",     // a propósito distinto de lo facturado
+    cambio: "12.00",
+    tarjeta: "100000.00",
+    athMovil: "154000.00",
   });
 
-  await esperarTotal(pagina, "#venta-y-cambio", "300.00");
+  await esperarTotal(pagina, "#venta-y-cambio", "155,000.00");
   revisar("Suma el efectivo del comienzo con la lectura", true);
-  await esperarTotal(pagina, "#total-efectivo", "200.00");
-  revisar("Y descuenta la tarjeta y el cambio apartado", true);
+  await esperarTotal(pagina, "#total-efectivo", "154,988.00");
+  revisar("Descuenta el cambio apartado, y la tarjeta no toca la gaveta", true);
 
   // --- el contraste con lo facturado ---------------------------------------
   await pagina.waitForSelector(".contraste");
@@ -119,23 +121,23 @@ try {
   );
   revisar(
     "Además de cuántas facturas fueron y en qué horas",
-    /1 factura\(s\) emitidas entre las \d{2}:\d{2} y las \d{2}:\d{2}/.test(
+    /1 factura\(s\) entre las \d{2}:\d{2} y las \d{2}:\d{2}/.test(
       await pagina.locator("#ventana-turno").innerText(),
     ),
   );
 
   // --- gastos ---------------------------------------------------------------
-  await pagina.fill("#gasto-descripcion-0", "Hielo");
-  await pagina.fill("#gasto-monto-0", "15.00");
-  await pagina.getByRole("button", { name: "+ Agregar gasto" }).click();
-  await pagina.fill("#gasto-descripcion-1", "Gasolina del reparto");
-  await pagina.fill("#gasto-monto-1", "5.00");
-  await esperarTotal(pagina, "#totales-cuadre", "180.00");
+  await pagina.fill("#gasto-descripcion-0", "Compra de agua");
+  await pagina.fill("#gasto-monto-0", "150.00");
+  await esperarTotal(pagina, "#totales-cuadre", "154,838.00");
   await capturar(pagina, "142-cuadre-escrito");
 
   const totales = await pagina.locator("#totales-cuadre").innerText();
-  revisar("Los gastos se restan del depósito", totales.includes("20.00") && totales.includes("180.00"));
-  revisar("Y el total de ventas es solo lo vendido, sin el fondo", totales.includes("200.00"));
+  revisar("Los gastos se restan del depósito", totales.includes("150.00") && totales.includes("154,838.00"));
+  revisar(
+    "Y el total de ventas suma la tarjeta y el ATH Móvil al depósito",
+    totales.includes("408,838.00"),
+  );
 
   // --- guardar y volver al listado -----------------------------------------
   await pagina.getByRole("button", { name: "Guardar datos" }).click();
@@ -148,7 +150,7 @@ try {
   );
   revisar(
     "Al guardar confirma cuánto hay que depositar",
-    (await pagina.locator(".avisos").innerText()).includes("A depositar 180.00"),
+    (await pagina.locator(".avisos").innerText()).includes("A depositar 154,838.00"),
   );
 
   // --- el papel -------------------------------------------------------------
@@ -172,20 +174,20 @@ try {
   await capturar(pagina, "143-cuadres-listado");
 
   const fila = await pagina.locator("table.tabla tbody tr").first().innerText();
-  revisar("La hoja aparece en el listado con sus cifras", fila.includes("180.00") && fila.includes("200.00"));
+  revisar("La hoja aparece en el listado con sus cifras", fila.includes("154,838.00") && fila.includes("150,000.00"));
   revisar("Y dice quién la cuadró", fila.includes("Pedro Rivera"));
 
   const resumen = await pagina.locator(".resumen").innerText();
-  revisar("El pie suma lo gastado y lo que hay que depositar", resumen.includes("20.00") && resumen.includes("180.00"));
+  revisar("El pie suma lo gastado y lo que hay que depositar", resumen.includes("150.00") && resumen.includes("154,838.00"));
 
   // --- se reabre tal como se dejó -------------------------------------------
   await pagina.getByRole("button", { name: "Abrir" }).first().click();
   await pagina.waitForSelector(".cuadre");
-  await pagina.waitForFunction(() => document.querySelector("#ventas_lectura")?.value === "200.00", null, { timeout: 5000 });
+  await pagina.waitForFunction(() => document.querySelector("#ventas_lectura")?.value === "150000.00", null, { timeout: 5000 });
 
-  revisar("Al reabrirla conserva la lectura", (await pagina.inputValue("#ventas_lectura")) === "200.00");
-  revisar("El efectivo del comienzo", (await pagina.inputValue("#efectivo_inicial")) === "100.00");
-  revisar("Y sus dos gastos", (await pagina.inputValue("#gasto-descripcion-1")).includes("Gasolina"));
+  revisar("Al reabrirla conserva la lectura", (await pagina.inputValue("#ventas_lectura")) === "150000.00");
+  revisar("El efectivo del comienzo", (await pagina.inputValue("#efectivo_inicial")) === "5000.00");
+  revisar("Y su gasto", (await pagina.inputValue("#gasto-descripcion-0")).includes("agua"));
 
   // --- no se cuadra dos veces el mismo turno --------------------------------
   await pagina.getByRole("button", { name: "Cerrar", exact: true }).click();

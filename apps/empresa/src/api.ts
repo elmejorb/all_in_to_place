@@ -443,3 +443,17 @@ export function aCentavos(texto: string): number {
 }
 
 export const aTexto = (centavos: number) => (centavos / 100).toFixed(2);
+
+/**
+ * El dinero como se lee, con separador de miles.
+ *
+ * La API siempre habla en crudo ("154838.00") porque así se compara y se
+ * exporta sin sorpresas; el separador es cosa de la pantalla. Sin él, una cifra
+ * de seis dígitos hay que contarla con el dedo.
+ */
+export function enDinero(valor: string | number): string {
+  const numero = typeof valor === "number" ? valor : Number(valor);
+  if (Number.isNaN(numero)) return String(valor);
+
+  return numero.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

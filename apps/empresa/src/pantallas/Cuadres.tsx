@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Aviso, Boton } from "@aiop/ui";
-import { api, ErrorApi, type ListadoCuadres } from "../api";
+import { api, enDinero, ErrorApi, type ListadoCuadres } from "../api";
 import { HojaDeCuadre } from "./HojaDeCuadre";
 
 /** El primer día del mes en curso, que es el rango que se consulta casi siempre. */
@@ -83,15 +83,15 @@ export function Cuadres({ soloLectura }: { soloLectura: boolean }) {
             <small>Hojas en el rango</small>
           </div>
           <div className="resumen__dato" data-tono="marca">
-            <b className="numerica">{resumen.ventas}</b>
+            <b className="numerica">{enDinero(resumen.ventas)}</b>
             <small>Ventas</small>
           </div>
           <div className="resumen__dato">
-            <b className="numerica">{resumen.gastos}</b>
+            <b className="numerica">{enDinero(resumen.gastos)}</b>
             <small>Gastos</small>
           </div>
           <div className="resumen__dato" data-tono="bien">
-            <b className="numerica">{resumen.a_depositar}</b>
+            <b className="numerica">{enDinero(resumen.a_depositar)}</b>
             <small>Para depositar</small>
           </div>
         </div>
@@ -149,13 +149,13 @@ export function Cuadres({ soloLectura }: { soloLectura: boolean }) {
                   <td data-etiqueta="Horario">
                     <span className="etiqueta">{TURNO[h.turno] ?? h.turno}</span>
                   </td>
-                  <td className="numerica derecha" data-etiqueta="Efectivo inicial">{h.efectivo_inicial}</td>
-                  <td className="numerica derecha" data-etiqueta="Ventas según lectura">{h.ventas_lectura}</td>
-                  <td className="numerica derecha" data-etiqueta="Efectivo para cambio">{h.efectivo_cambio}</td>
-                  <td className="numerica derecha" data-etiqueta="Total efectivo">{h.total_efectivo}</td>
-                  <td className="numerica derecha" data-etiqueta="Gastos">{h.gastos}</td>
+                  <td className="numerica derecha" data-etiqueta="Efectivo inicial">{enDinero(h.efectivo_inicial)}</td>
+                  <td className="numerica derecha" data-etiqueta="Ventas según lectura">{enDinero(h.ventas_lectura)}</td>
+                  <td className="numerica derecha" data-etiqueta="Efectivo para cambio">{enDinero(h.efectivo_cambio)}</td>
+                  <td className="numerica derecha" data-etiqueta="Total efectivo">{enDinero(h.total_efectivo)}</td>
+                  <td className="numerica derecha" data-etiqueta="Gastos">{enDinero(h.gastos)}</td>
                   <td className="numerica derecha" data-etiqueta="Efectivo para depositar">
-                    <b>{h.a_depositar}</b>
+                    <b>{enDinero(h.a_depositar)}</b>
                   </td>
                   <td className="celda-acciones">
                     <div className="acciones">

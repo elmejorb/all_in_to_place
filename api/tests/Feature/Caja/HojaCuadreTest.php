@@ -40,20 +40,23 @@ class HojaCuadreTest extends TestCase
         return [$r->json('hoy'), $r->json('turno_actual')];
     }
 
-    /** El turno del ejemplo: abre con 100, la lectura marca 1,250. */
+    /**
+     * El turno de referencia: las mismas cifras que Luis metió en el sistema
+     * actual para enseñarme los cálculos, así que los totales de aquí se pueden
+     * cotejar con los de allá.
+     */
     private function turno(array $extra = []): array
     {
         return array_merge([
             'fecha' => $this->ayer(),
             'turno' => 'am',
-            'efectivo_inicial' => '100.00',
-            'ventas_lectura' => '1250.00',
-            'efectivo_cambio' => '100.00',
-            'tarjeta' => '400.00',
-            'ath_movil' => '150.00',
+            'efectivo_inicial' => '5000.00',
+            'ventas_lectura' => '150000.00',
+            'efectivo_cambio' => '12.00',
+            'tarjeta' => '100000.00',
+            'ath_movil' => '154000.00',
             'gastos' => [
-                ['descripcion' => 'Hielo', 'monto' => '50.00'],
-                ['descripcion' => 'Gasolina del reparto', 'monto' => '30.00'],
+                ['descripcion' => 'Compra de agua', 'monto' => '150.00'],
             ],
         ], $extra);
     }
@@ -66,12 +69,12 @@ class HojaCuadreTest extends TestCase
 
         $r = $this->postJson('/v1/cuadres', $this->turno())->assertCreated();
 
-        $this->assertSame('1350.00', $r->json('venta_y_cambio'));
-        $this->assertSame('700.00', $r->json('total_efectivo'));
-        $this->assertSame('80.00', $r->json('gastos'));
-        $this->assertSame('620.00', $r->json('a_depositar'));
-        $this->assertSame('1250.00', $r->json('total_ventas'));
-        $this->assertCount(2, $r->json('gastos_detalle'));
+        $this->assertSame('155000.00', $r->json('venta_y_cambio'));
+        $this->assertSame('154988.00', $r->json('total_efectivo'));
+        $this->assertSame('150.00', $r->json('gastos'));
+        $this->assertSame('154838.00', $r->json('a_depositar'));
+        $this->assertSame('408838.00', $r->json('total_ventas'));
+        $this->assertCount(1, $r->json('gastos_detalle'));
         $this->assertSame('Pedro Rivera', $r->json('cuadro'));
     }
 
@@ -102,7 +105,7 @@ class HojaCuadreTest extends TestCase
 
         $this->assertCount(1, $r->json('gastos_detalle'));
         $this->assertSame('12.50', $r->json('gastos'));
-        $this->assertSame('687.50', $r->json('a_depositar'));
+        $this->assertSame('154975.50', $r->json('a_depositar'));
     }
 
     public function test_una_hoja_sin_gastos_es_valida(): void
@@ -112,7 +115,7 @@ class HojaCuadreTest extends TestCase
         $r = $this->postJson('/v1/cuadres', $this->turno(['gastos' => []]))->assertCreated();
 
         $this->assertSame('0.00', $r->json('gastos'));
-        $this->assertSame('700.00', $r->json('a_depositar'));
+        $this->assertSame('154988.00', $r->json('a_depositar'));
     }
 
     // --- lo que tiene que fallar ---------------------------------------------
@@ -184,16 +187,16 @@ class HojaCuadreTest extends TestCase
         $r = $this->postJson('/v1/cuadres', $this->turno([
             'fecha' => $hoy,
             'turno' => $turno,
-            'ventas_lectura' => $total,       // se escribe justo lo facturado
+            'ventas_lectura' => $total,       // se escribe justo lo cobrado en efectivo
         ]))->assertCreated();
 
-        $this->assertSame($total, $r->json('facturado.ventas'));
-        $this->assertTrue($r->json('comparacion.ventas.cuadra'));
-        $this->assertSame('0.00', $r->json('comparacion.ventas.diferencia'));
+        $this->assertSame($total, $r->json('facturado.efectivo'));
+        $this->assertTrue($r->json('comparacion.efectivo.cuadra'));
+        $this->assertSame('0.00', $r->json('comparacion.efectivo.diferencia'));
 
-        // La tarjeta no cuadra: se escribieron 400 y no se cobró ninguna.
+        // La tarjeta no cuadra: se escribieron 100,000 y no se cobró ninguna.
         $this->assertFalse($r->json('comparacion.tarjeta.cuadra'));
-        $this->assertSame('400.00', $r->json('comparacion.tarjeta.diferencia'));
+        $this->assertSame('100000.00', $r->json('comparacion.tarjeta.diferencia'));
     }
 
     public function test_una_factura_anulada_no_cuenta_en_la_comparacion(): void
@@ -238,8 +241,8 @@ class HojaCuadreTest extends TestCase
         $r = $this->getJson('/v1/cuadres')->assertOk();
 
         $this->assertSame(2, $r->json('resumen.hojas'));
-        $this->assertSame('160.00', $r->json('resumen.gastos'));
-        $this->assertSame('1240.00', $r->json('resumen.a_depositar'));
+        $this->assertSame('300.00', $r->json('resumen.gastos'));
+        $this->assertSame('309676.00', $r->json('resumen.a_depositar'));
     }
 
     public function test_el_listado_filtra_por_fechas(): void

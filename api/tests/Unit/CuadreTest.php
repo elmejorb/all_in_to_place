@@ -6,51 +6,98 @@ use App\Domain\Cuadre;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Los números de la hoja de cuadre, escritos antes que la pantalla (CAL-11).
+ * Los números de la hoja de cuadre (CAL-11).
  *
- * El ejemplo que se repite es el de un turno normal: se abre con 100 de
- * cambio, la registradora marca 1,250, de eso 400 fueron con tarjeta y 150 con
- * ATH Móvil, se apartan 100 para el cambio de mañana y se gastaron 80.
+ * El caso de referencia son las cifras que Luis metió en el sistema actual el
+ * 17 de septiembre de 2026 para enseñarme los cálculos. Mientras esta prueba
+ * pase, una hoja hecha aquí da exactamente lo mismo que la de allá; si alguien
+ * cambia una fórmula, se entera aquí y no en la caja.
  */
 class CuadreTest extends TestCase
 {
-    private const TURNO = [
-        'efectivo_inicial' => 10000,
-        'ventas_lectura' => 125000,
-        'efectivo_cambio' => 10000,
-        'tarjeta' => 40000,
-        'ath_movil' => 15000,
+    /** Efectivo 5,000 · lectura 150,000 · tarjeta 100,000 · ATH Móvil 154,000 · cambio 12. */
+    private const REFERENCIA = [
+        'efectivo_inicial' => 500000,
+        'ventas_lectura' => 15000000,
+        'efectivo_cambio' => 1200,
+        'tarjeta' => 10000000,
+        'ath_movil' => 15400000,
     ];
 
-    public function test_un_turno_normal_cuadra_hasta_el_deposito(): void
+    public function test_reproduce_la_hoja_del_sistema_actual(): void
     {
-        $r = Cuadre::calcular(self::TURNO, [5000, 3000]);
+        $r = Cuadre::calcular(self::REFERENCIA, [15000]);   // un gasto de 150
 
-        $this->assertSame(135000, $r['venta_y_cambio']);   // 100 + 1250
-        $this->assertSame(70000, $r['total_efectivo']);    // 1350 - 400 - 150 - 100
-        $this->assertSame(8000, $r['gastos']);             // 50 + 30
-        $this->assertSame(62000, $r['a_depositar']);       // 700 - 80
-        $this->assertSame(125000, $r['total_ventas']);
+        $this->assertSame(15500000, $r['venta_y_cambio']);   // 155,000.00
+        $this->assertSame(15498800, $r['total_efectivo']);   // 154,988.00
+        $this->assertSame(15000, $r['gastos']);              //     150.00
+        $this->assertSame(15483800, $r['a_depositar']);      // 154,838.00
+        $this->assertSame(40883800, $r['total_ventas']);     // 408,838.00
     }
 
-    public function test_el_fondo_de_cambio_no_cuenta_como_venta(): void
+    public function test_la_tarjeta_no_sale_de_la_gaveta(): void
     {
-        // Se abre con más dinero pero no se vendió más: el depósito sube, las
-        // ventas no. Confundir las dos cosas infla el negocio.
-        $conMasFondo = ['efectivo_inicial' => 50000] + self::TURNO;
+        // Lo cobrado con tarjeta y con ATH Móvil no toca el efectivo: cambiarlos
+        // no mueve ni el total de efectivo ni el depósito, solo el total vendido.
+        $sinTarjeta = ['tarjeta' => 0, 'ath_movil' => 0] + self::REFERENCIA;
 
-        $normal = Cuadre::calcular(self::TURNO);
-        $conFondo = Cuadre::calcular($conMasFondo);
+        $con = Cuadre::calcular(self::REFERENCIA);
+        $sin = Cuadre::calcular($sinTarjeta);
 
-        $this->assertSame($normal['total_ventas'], $conFondo['total_ventas']);
-        $this->assertSame($normal['a_depositar'] + 40000, $conFondo['a_depositar']);
+        $this->assertSame($con['total_efectivo'], $sin['total_efectivo']);
+        $this->assertSame($con['a_depositar'], $sin['a_depositar']);
+        $this->assertSame($con['total_ventas'] - 25400000, $sin['total_ventas']);
+    }
+
+    public function test_el_cambio_apartado_sale_de_la_gaveta_pero_no_de_las_ventas(): void
+    {
+        $sinApartar = ['efectivo_cambio' => 0] + self::REFERENCIA;
+
+        $normal = Cuadre::calcular(self::REFERENCIA);
+        $todo = Cuadre::calcular($sinApartar);
+
+        $this->assertSame($normal['total_efectivo'] + 1200, $todo['total_efectivo']);
+        $this->assertSame($normal['a_depositar'] + 1200, $todo['a_depositar']);
+    }
+
+    public function test_los_gastos_se_suman_y_bajan_el_deposito(): void
+    {
+        $r = Cuadre::calcular(self::REFERENCIA, [15000, 2500, 1]);
+
+        $this->assertSame(17501, $r['gastos']);
+        $this->assertSame(15498800 - 17501, $r['a_depositar']);
+    }
+
+    public function test_una_hoja_en_blanco_da_ceros_y_no_revienta(): void
+    {
+        $r = Cuadre::calcular([]);
+
+        $this->assertSame(0, $r['venta_y_cambio']);
+        $this->assertSame(0, $r['total_efectivo']);
+        $this->assertSame(0, $r['a_depositar']);
+        $this->assertSame(0, $r['total_ventas']);
+    }
+
+    public function test_gastar_mas_de_lo_que_hay_deja_el_deposito_en_negativo(): void
+    {
+        // No se corrige a cero: un depósito negativo significa que falta dinero
+        // en la gaveta y eso tiene que verse.
+        $r = Cuadre::calcular([
+            'efectivo_inicial' => 0,
+            'ventas_lectura' => 10000,
+            'efectivo_cambio' => 0,
+            'tarjeta' => 0,
+            'ath_movil' => 0,
+        ], [50000]);
+
+        $this->assertSame(-40000, $r['a_depositar']);
     }
 
     public function test_un_turno_solo_de_tarjeta_no_deja_efectivo_que_depositar(): void
     {
         $r = Cuadre::calcular([
             'efectivo_inicial' => 0,
-            'ventas_lectura' => 50000,
+            'ventas_lectura' => 0,
             'efectivo_cambio' => 0,
             'tarjeta' => 50000,
             'ath_movil' => 0,
@@ -61,42 +108,17 @@ class CuadreTest extends TestCase
         $this->assertSame(50000, $r['total_ventas']);
     }
 
-    public function test_una_hoja_en_blanco_da_ceros_y_no_revienta(): void
-    {
-        $r = Cuadre::calcular([]);
-
-        $this->assertSame(0, $r['venta_y_cambio']);
-        $this->assertSame(0, $r['total_efectivo']);
-        $this->assertSame(0, $r['a_depositar']);
-    }
-
-    public function test_gastar_mas_de_lo_que_hay_deja_el_deposito_en_negativo(): void
-    {
-        // No se corrige a cero: un depósito negativo significa que falta
-        // dinero en la gaveta y eso tiene que verse.
-        $r = Cuadre::calcular(self::TURNO, [100000]);
-
-        $this->assertSame(-30000, $r['a_depositar']);
-    }
-
-    public function test_los_gastos_se_suman_enteros(): void
-    {
-        $r = Cuadre::calcular(self::TURNO, [1, 2, 3, 4]);
-
-        $this->assertSame(10, $r['gastos']);
-    }
-
     // --- comparación con lo facturado ---------------------------------------
 
     public function test_dice_en_cuanto_difiere_lo_escrito_de_lo_facturado(): void
     {
         $r = Cuadre::comparar(
-            ['ventas' => 125000, 'ath_movil' => 15000],
-            ['ventas' => 126850, 'ath_movil' => 15000],
+            ['efectivo' => 15000000, 'ath_movil' => 15400000],
+            ['efectivo' => 14990000, 'ath_movil' => 15400000],
         );
 
-        $this->assertSame(-1850, $r['ventas']['diferencia']);
-        $this->assertFalse($r['ventas']['cuadra']);
+        $this->assertSame(10000, $r['efectivo']['diferencia']);
+        $this->assertFalse($r['efectivo']['cuadra']);
 
         $this->assertSame(0, $r['ath_movil']['diferencia']);
         $this->assertTrue($r['ath_movil']['cuadra']);
@@ -104,7 +126,7 @@ class CuadreTest extends TestCase
 
     public function test_lo_que_el_sistema_no_tiene_se_compara_contra_cero(): void
     {
-        // Se cobró con tarjeta pero no se factur nada: la diferencia es todo.
+        // Se escribió que entraron 400 con tarjeta pero no se facturó ninguna.
         $r = Cuadre::comparar([], ['tarjeta' => 40000]);
 
         $this->assertSame(0, $r['tarjeta']['declarado']);
@@ -114,9 +136,9 @@ class CuadreTest extends TestCase
     public function test_solo_compara_los_conceptos_que_el_sistema_conoce(): void
     {
         // El efectivo al comienzo no sale de ninguna factura: no se compara.
-        $r = Cuadre::comparar(['efectivo_inicial' => 10000], ['ventas' => 0]);
+        $r = Cuadre::comparar(['efectivo_inicial' => 10000], ['efectivo' => 0]);
 
         $this->assertArrayNotHasKey('efectivo_inicial', $r);
-        $this->assertArrayHasKey('ventas', $r);
+        $this->assertArrayHasKey('efectivo', $r);
     }
 }

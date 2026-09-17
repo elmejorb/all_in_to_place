@@ -127,14 +127,16 @@ class CuadreController extends Controller
             'facturado' => $facturado,
             'comparacion' => Cuadre::comparar(
                 [
-                    'ventas' => $hoja->ventas_lectura_centavos,
+                    'efectivo' => $hoja->ventas_lectura_centavos,
                     'tarjeta' => $hoja->tarjeta_centavos,
                     'ath_movil' => $hoja->ath_movil_centavos,
                 ],
-                ['ventas' => $facturado['ventas'], 'tarjeta' => $facturado['tarjeta'], 'ath_movil' => $facturado['ath_movil']],
+                [
+                    'efectivo' => $facturado['efectivo'],
+                    'tarjeta' => $facturado['tarjeta'],
+                    'ath_movil' => $facturado['ath_movil'],
+                ],
             ),
-            // La plantilla no sabe de centavos: se le pasa cómo escribirlos.
-            'n' => fn (int $centavos) => Precio::aTexto($centavos),
             'impresa' => Cuadrador::hoy(),
         ])->render());
 
@@ -269,13 +271,19 @@ class CuadreController extends Controller
         $t = $h->totales();
         $facturado = Cuadrador::loFacturado($h->fecha->toDateString(), $h->turno);
 
+        // La lectura es solo efectivo, así que se compara contra el efectivo
+        // cobrado, no contra el total facturado.
         $comparacion = Cuadre::comparar(
             [
-                'ventas' => $h->ventas_lectura_centavos,
+                'efectivo' => $h->ventas_lectura_centavos,
                 'tarjeta' => $h->tarjeta_centavos,
                 'ath_movil' => $h->ath_movil_centavos,
             ],
-            ['ventas' => $facturado['ventas'], 'tarjeta' => $facturado['tarjeta'], 'ath_movil' => $facturado['ath_movil']],
+            [
+                'efectivo' => $facturado['efectivo'],
+                'tarjeta' => $facturado['tarjeta'],
+                'ath_movil' => $facturado['ath_movil'],
+            ],
         );
 
         return $this->comoResumen($h) + [

@@ -21,20 +21,42 @@ a hacer solo eso.
 ## La aritmética
 
 ```
-Total venta y cambio    = efectivo al comienzo + ventas según lectura
-Total efectivo          = total venta y cambio − tarjeta − ATH Móvil − cambio
+Total venta y cambio    = efectivo al comienzo + ventas en efectivo (lectura)
+Total efectivo          = total venta y cambio − efectivo para cambio
 Total compras y gastos  = suma de los gastos
 Efectivo para depositar = total efectivo − gastos
-Total ventas            = ventas según lectura
+Total ventas            = efectivo para depositar + tarjeta + ATH Móvil
 ```
 
-> **Pendiente de confirmar con quien cuadra la caja.** Aquí se da por hecho que
-> *Ventas (según lectura)* es el total del turno **con tarjeta incluida**, que es
-> por lo que se restan tarjeta y ATH Móvil para llegar al efectivo que debe
-> haber en la gaveta. Si en la panadería la lectura viniera ya solo de efectivo,
-> habría que dejar de restarlas: es la única línea que cambia, está aislada en
-> `App\Domain\Cuadre::calcular()` y tiene sus casos numéricos en
-> `tests/Unit/CuadreTest.php`.
+**La lectura es solo el efectivo.** Lo cobrado con tarjeta y con ATH Móvil no
+sale de la gaveta: no se resta, se suma al final para llegar al total vendido.
+
+Las fórmulas están **comprobadas contra el sistema actual**. Luis metió allá un
+turno de prueba y esas mismas cifras son el caso de referencia de
+`tests/Unit/CuadreTest.php`:
+
+| | |
+|---|---|
+| Efectivo al comienzo | 5,000.00 |
+| Ventas en efectivo (lectura) | 150,000.00 |
+| ATH / Visa / Mastercard | 100,000.00 |
+| ATH Móvil | 154,000.00 |
+| Efectivo para cambio | 12.00 |
+| Compras y gastos | 150.00 |
+| **Total venta y cambio** | **155,000.00** |
+| **Total efectivo** | **154,988.00** |
+| **Efectivo para depositar** | **154,838.00** |
+| **Total ventas** | **408,838.00** |
+
+Mientras esa prueba pase, una hoja hecha aquí da exactamente lo mismo que una
+hecha allá.
+
+> **Un apunte para revisar algún día, no un error.** El *total de ventas* así
+> calculado arrastra el fondo de cambio del comienzo y descuenta los gastos, de
+> modo que no coincide con la suma limpia de lo vendido: en el ejemplo da
+> 408,838.00 cuando lo vendido fueron 404,000.00. Se reproduce tal cual porque
+> es la cifra con la que la panadería lleva años comparando, y cambiarla haría
+> que los cierres nuevos no se pudieran cotejar con los viejos.
 
 **Los totales no se guardan, se calculan.** En la base están solo las cinco
 cifras que se escriben y los gastos; el depósito sale siempre de la fórmula. Así
@@ -51,7 +73,8 @@ factura una venta, nadie lo notaría nunca.
 
 Lo que sí hace el sistema es **poner su cifra al lado**:
 
-- Bajo *Ventas (según lectura)*, lo facturado en ese turno y la diferencia.
+- Bajo *Ventas en efectivo (según lectura)*, lo cobrado en efectivo según el
+  sistema y la diferencia.
 - Bajo *ATH/Visa/Mastercard* y *ATH Móvil*, lo cobrado por cada método.
 - Cuántas facturas fueron y entre qué horas.
 
@@ -60,8 +83,9 @@ momento, no tres días después. Lo mismo se imprime en el PDF, de modo que el
 papel que se archiva ya lleva el control cruzado hecho.
 
 **El turno se define por la hora**: de mañana hasta el mediodía, de tarde a
-partir de ahí, contado en la zona horaria de la empresa. Una hoja nueva se abre
-en el turno que se acaba de trabajar.
+partir de ahí, contado en la zona horaria de la empresa —Puerto Rico en el caso
+de El Álamo, confirmado el 17/09/2026—. Una hoja nueva se abre en el turno que
+se acaba de trabajar.
 
 ## Reglas
 
