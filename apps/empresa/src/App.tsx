@@ -13,6 +13,7 @@ import {
 import { api, ErrorApi, type EmpresaResumen, type Estado } from "./api";
 import { Categorias } from "./pantallas/Categorias";
 import { Clientes } from "./pantallas/Clientes";
+import { Cuadres } from "./pantallas/Cuadres";
 import { Facturas } from "./pantallas/Facturas";
 import { Productos } from "./pantallas/Productos";
 import { Suplidores } from "./pantallas/Suplidores";
@@ -28,6 +29,12 @@ const VENTAS: Modulo[] = [
   { clave: "clientes", titulo: "Clientes", icono: "☺", grupo: "Ventas" },
 ];
 
+// La hoja de cuadre va en su propio grupo: no es una venta ni un producto, es
+// el cierre del turno, y quien la usa entra a hacer solo eso.
+const CAJA: Modulo[] = [
+  { clave: "cuadres", titulo: "Hoja de Cuadre", icono: "▦", grupo: "Caja" },
+];
+
 /** El menú muestra solo lo que el rol puede abrir (ROL-03 en la interfaz). */
 function modulosDe(permisos: string[]): Modulo[] {
   const ventas = VENTAS.filter((m) =>
@@ -37,6 +44,7 @@ function modulosDe(permisos: string[]): Modulo[] {
   return [
     ...(permisos.includes("catalogo.ver") ? INVENTARIO : []),
     ...ventas,
+    ...(permisos.includes("caja.ver") ? CAJA : []),
   ];
 }
 
@@ -209,6 +217,8 @@ function Aplicacion({ estado, alCambiar }: { estado: Estado; alCambiar: (e: Esta
         <Clientes soloLectura={activa.solo_lectura} />
       ) : seccion === "facturas" && activa && permisos.includes("facturas.emitir") ? (
         <Facturas soloLectura={activa.solo_lectura} />
+      ) : seccion === "cuadres" && activa && permisos.includes("caja.ver") ? (
+        <Cuadres soloLectura={activa.solo_lectura} />
       ) : (
         <PantallaEmpresas estado={estado} activa={activa} alElegir={elegirEmpresa} />
       )}

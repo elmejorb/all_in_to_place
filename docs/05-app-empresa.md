@@ -141,9 +141,11 @@ Los once módulos funcionales de la aplicación que usan las empresas.
 
 ## 5.9 Hoja de Cuadre (cierre de caja)
 
-> Estos requisitos asumen que la Hoja de Cuadre es el cierre de caja por turno.
-> Confirmar antes de construir, ver la pregunta 1 de
-> [12-limites-y-pendientes.md](12-limites-y-pendientes.md).
+> **Resuelto.** La Hoja de Cuadre real es el cierre de caja por turno, y es más
+> simple de lo que suponían `CAJ-01` a `CAJ-10`: cinco cifras escritas a mano,
+> una lista de gastos y el efectivo a depositar. Lo construido son `CAJ-11` a
+> `CAJ-14`; ver [16-hoja-de-cuadre.md](16-hoja-de-cuadre.md). Los demás
+> requisitos de esta sección siguen siendo válidos como mejoras posteriores.
 
 | ID | Prioridad | Requisito |
 |---|---|---|
@@ -157,6 +159,10 @@ Los once módulos funcionales de la aplicación que usan las empresas.
 | CAJ-08 | F2 | Depósito bancario: monto, banco, referencia y comprobante, ligado a uno o varios turnos. |
 | CAJ-09 | F2 | Histórico de cuadres con filtros por fecha, sucursal y usuario, y señal de faltantes recurrentes. |
 | CAJ-10 | F2 | Cierre de día que consolida todos los turnos de la sucursal. |
+| CAJ-11 | MVP | Hoja de cuadre por fecha y turno (mañana o tarde), con efectivo al comienzo, ventas según lectura, cobrado con tarjeta y con ATH Móvil, efectivo apartado para cambio y lista de compras y gastos. |
+| CAJ-12 | MVP | Junto a cada cifra escrita se muestra lo que el sistema facturó en ese turno y la diferencia. Los campos se siguen escribiendo a mano: rellenarlos destruiría el control. |
+| CAJ-13 | MVP | Una sola hoja por fecha y turno, garantizado por la base. No se cuadra un turno que todavía no ha pasado. |
+| CAJ-14 | MVP | Los totales no se guardan: se calculan siempre desde las cifras escritas, de modo que una hoja no puede mostrar un total que no corresponda a sus propios números. |
 
 ## 5.10 Panel y reportes
 

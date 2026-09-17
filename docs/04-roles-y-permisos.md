@@ -64,7 +64,10 @@ Aclaraciones de los `Limit.`:
   una venta ya emitida.
 - **Empleado / clientes:** solo con perfil de mostrador, porque sin clientes
   no puede facturar a quien llega por primera vez (CLI-02).
-- **Empleado / caja:** abre y cierra su propio turno, no el de otros.
+- **Empleado / caja:** cuadra su propio turno y solo ve sus propias hojas. Es
+  el de mostrador; al de almacén no se le ofrece el módulo.
+- **Contador / caja:** ve todas las hojas y las abre en solo lectura, sin botón
+  de guardar y con los campos deshabilitados.
 - **Empleado y Contratista / reportes:** solo los de su propia actividad.
 - **Contratista / facturar:** solo documentos propios, y solo los ve él y sus
   superiores.
@@ -85,3 +88,4 @@ Aclaraciones de los `Limit.`:
 | ROL-09 | MVP | El rol se asigna por empresa, no por usuario: la misma persona puede ser Propietario en una y Empleado en otra. |
 | ROL-10 | F3 | Roles personalizados con permisos granulares por módulo. |
 | ROL-11 | MVP | Ver la lista de productos es un permiso propio, separado del resto del catálogo: quien factura la necesita aunque no administre el inventario. |
+| ROL-12 | MVP | La caja se reparte en tres permisos: ver, cuadrar y ver las hojas de otros. El contador ve sin cuadrar; el de mostrador cuadra sin ver las ajenas. |

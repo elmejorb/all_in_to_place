@@ -362,3 +362,84 @@ export type ListadoFacturas = {
   metodos_pago: string[];
   permisos: { facturar: boolean; anular: boolean };
 };
+
+// --- hoja de cuadre (CAJ-11 a CAJ-14) ---------------------------------------
+
+export type GastoCuadre = { id?: string; descripcion: string; monto: string };
+
+export type CuadreResumen = {
+  id: string;
+  fecha: string;
+  turno: string;
+  efectivo_inicial: string;
+  ventas_lectura: string;
+  efectivo_cambio: string;
+  total_efectivo: string;
+  gastos: string;
+  a_depositar: string;
+  cuadro: string | null;
+};
+
+/** Lo escrito a mano frente a lo que el sistema facturó (CAJ-12). */
+export type Comparado = {
+  declarado: string;
+  facturado: string;
+  diferencia: string;
+  cuadra: boolean;
+};
+
+export type CuadreDetalle = CuadreResumen & {
+  tarjeta: string;
+  ath_movil: string;
+  venta_y_cambio: string;
+  total_ventas: string;
+  notas: string | null;
+  gastos_detalle: GastoCuadre[];
+  facturado: {
+    facturas: number;
+    ventas: string;
+    tarjeta: string;
+    ath_movil: string;
+    efectivo: string;
+  };
+  comparacion: Record<string, Comparado>;
+};
+
+export type ListadoCuadres = {
+  datos: CuadreResumen[];
+  siguiente: string | null;
+  anterior: string | null;
+  resumen: { hojas: number; gastos: string; a_depositar: string; ventas: string };
+  turnos: string[];
+  /** El día y el turno de la empresa ahora mismo, no los del navegador. */
+  hoy: string;
+  turno_actual: string;
+  permisos: { cuadrar: boolean; ver_todas: boolean };
+};
+
+export type FacturadoEnTurno = {
+  /** Horas del turno ya en la zona de la empresa, como "00:00". */
+  desde: string;
+  hasta: string;
+  facturas: number;
+  ventas: string;
+  tarjeta: string;
+  ath_movil: string;
+  efectivo: string;
+};
+
+/**
+ * El dinero se suma en centavos enteros, nunca en coma flotante (ARQ-09).
+ *
+ * Esta aritmética repite la de `App\Domain\Cuadre` a propósito: son cuatro
+ * sumas y pedirlas al servidor en cada tecla sería absurdo. El servidor sigue
+ * siendo el que manda —recalcula al guardar y su respuesta pisa lo que hay en
+ * pantalla—, así que una diferencia no puede sobrevivir a un guardado.
+ */
+export function aCentavos(texto: string): number {
+  const limpio = texto.replace(/\s/g, "").replace(",", ".");
+  if (limpio === "" || Number.isNaN(Number(limpio))) return 0;
+  return Math.round(Number(limpio) * 100);
+}
+
+export const aTexto = (centavos: number) => (centavos / 100).toFixed(2);

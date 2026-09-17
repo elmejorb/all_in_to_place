@@ -29,7 +29,7 @@ empezar a construir. Están en orden de impacto.
 | # | Pregunta | Qué depende de la respuesta |
 |---|---|---|
 | 1 | **¿Uno o dos países?** Los datos actuales mezclan Colombia (Planeta Rica, Córdoba) y Puerto Rico (Bayamón). Si Colombia entra en serio, ¿hace falta facturación electrónica ante la DIAN? | Es la pregunta más grande del proyecto. La DIAN es un módulo completo: resolución de numeración, XML firmado, envío, acuse y contingencia. Cambia el tamaño de la Fase 1 y del equipo |
-| 2 | **Hoja de Cuadre.** Los requisitos `CAJ-01` a `CAJ-10` asumen cierre de caja por turno con conteo de efectivo y diferencia. ¿Es eso lo que se cuadra hoy, o incluye algo más, como comisiones por vendedor? | Todo el módulo 5.9 |
+| 2 | ~~**Hoja de Cuadre.**~~ **Resuelta el 17/09/2026.** Es el cierre de caja por turno, sin conteo por denominación ni comisiones: cinco cifras a mano, gastos y efectivo a depositar. Construida como `CAJ-11` a `CAJ-14`, ver [16-hoja-de-cuadre.md](16-hoja-de-cuadre.md). | Todo el módulo 5.9 |
 | 3 | **Tasas de impuesto.** ¿De dónde salen el 7% y el 11.5% de los productos actuales, y cuál queda por defecto en cada país? | `EMP-02`, `FAC-04`, `RPT-07`, `MIG-01` |
 | 4 | **Venta de mostrador.** ¿Toda venta se documenta como factura, o hace falta un punto de venta con caja, escáner y recibo simple como flujo principal? | `FAC-12`, prioridad de `CAJ-01` |
 | 5 | **La consola actual:** ¿se reconstruye en React sobre la API nueva o se mantiene y se le agrega lo que falta? La recomendación está en `11-fases-y-migracion.md`. | Dos o tres semanas de la Fase 0 |

@@ -35,6 +35,12 @@ final class Permisos
     // Costos y márgenes: no todos los roles ven lo que cuesta la mercancía.
     public const COSTOS_VER = 'costos.ver';
 
+    // Caja. Ver es aparte de cuadrar: el contador revisa los cierres pero no
+    // los toca, y el de mostrador cuadra su turno pero no ve los de otros.
+    public const CAJA_VER = 'caja.ver';
+    public const CAJA_CUADRAR = 'caja.cuadrar';
+    public const CAJA_VER_TODAS = 'caja.ver_todas';
+
     public const EMPRESA_CONFIGURAR = 'empresa.configurar';
     public const USUARIOS_GESTIONAR = 'usuarios.gestionar';
 
@@ -44,18 +50,21 @@ final class Permisos
             self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
+            self::CAJA_VER, self::CAJA_CUADRAR, self::CAJA_VER_TODAS,
             self::COSTOS_VER, self::EMPRESA_CONFIGURAR, self::USUARIOS_GESTIONAR,
         ],
         'administrador' => [
             self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR, self::CATALOGO_DESACTIVAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
+            self::CAJA_VER, self::CAJA_CUADRAR, self::CAJA_VER_TODAS,
             self::COSTOS_VER, self::USUARIOS_GESTIONAR,
         ],
         'gerente' => [
             self::CATALOGO_VER, self::PRODUCTOS_VER, self::CATALOGO_EDITAR,
             self::CLIENTES_VER, self::CLIENTES_EDITAR,
             self::FACTURAR, self::FACTURAS_ANULAR,
+            self::CAJA_VER, self::CAJA_CUADRAR, self::CAJA_VER_TODAS,
             self::COSTOS_VER,
         ],
         // El de almacén ve el catálogo; el de mostrador ve y crea clientes,
@@ -63,20 +72,26 @@ final class Permisos
         'empleado' => [
             self::CATALOGO_VER, self::PRODUCTOS_VER,
             self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR,
+            self::CAJA_VER, self::CAJA_CUADRAR,
         ],
         'contratista' => [
             self::CLIENTES_VER,
         ],
         'contador' => [
             self::CATALOGO_VER, self::PRODUCTOS_VER, self::CLIENTES_VER, self::COSTOS_VER,
+            // Ve los cierres y no puede tocarlos (matriz del documento 04).
+            self::CAJA_VER, self::CAJA_VER_TODAS,
         ],
     ];
 
     /** Permisos que solo tiene el empleado con perfil de almacén (ROL-08). */
     private const SOLO_ALMACEN = [self::CATALOGO_VER];
 
-    /** Y los que solo tiene el de mostrador. */
-    private const SOLO_MOSTRADOR = [self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR];
+    /** Y los que solo tiene el de mostrador: quien toca la caja. */
+    private const SOLO_MOSTRADOR = [
+        self::CLIENTES_VER, self::CLIENTES_EDITAR, self::FACTURAR,
+        self::CAJA_VER, self::CAJA_CUADRAR,
+    ];
 
     public static function permite(?Membresia $membresia, string $permiso): bool
     {

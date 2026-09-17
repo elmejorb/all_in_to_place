@@ -97,6 +97,16 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            /*
+             * La sesión habla UTC, como la aplicación.
+             *
+             * Laravel manda las fechas sin desfase ("2026-09-17 15:41:38") y
+             * Postgres las interpreta en la zona de su sesión. Si el clúster
+             * está en otra zona —el de esta máquina estaba en Bogotá—, cada
+             * marca de tiempo se guarda corrida esas horas y nadie lo nota
+             * hasta que algo compara instantes, como el cuadre por turno.
+             */
+            'timezone' => 'UTC',
         ],
 
         // Dueña del esquema. Solo para migraciones y pruebas: la aplicación nunca la usa (SEG-38).
@@ -113,6 +123,16 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            /*
+             * La sesión habla UTC, como la aplicación.
+             *
+             * Laravel manda las fechas sin desfase ("2026-09-17 15:41:38") y
+             * Postgres las interpreta en la zona de su sesión. Si el clúster
+             * está en otra zona —el de esta máquina estaba en Bogotá—, cada
+             * marca de tiempo se guarda corrida esas horas y nadie lo nota
+             * hasta que algo compara instantes, como el cuadre por turno.
+             */
+            'timezone' => 'UTC',
         ],
 
         // Conexión de la consola de plataforma. Sin política RLS sobre tablas de negocio: el motor le niega esos datos (ADM-08).
@@ -129,6 +149,16 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            /*
+             * La sesión habla UTC, como la aplicación.
+             *
+             * Laravel manda las fechas sin desfase ("2026-09-17 15:41:38") y
+             * Postgres las interpreta en la zona de su sesión. Si el clúster
+             * está en otra zona —el de esta máquina estaba en Bogotá—, cada
+             * marca de tiempo se guarda corrida esas horas y nadie lo nota
+             * hasta que algo compara instantes, como el cuadre por turno.
+             */
+            'timezone' => 'UTC',
         ],
 
         'sqlsrv' => [

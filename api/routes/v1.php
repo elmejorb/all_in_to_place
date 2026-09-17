@@ -4,6 +4,7 @@ use App\Http\Middleware\ExigirEmpresa;
 use App\Http\Middleware\ExigirPermiso;
 use App\Http\V1\Controllers\CategoriaController;
 use App\Http\V1\Controllers\ClienteController;
+use App\Http\V1\Controllers\CuadreController;
 use App\Http\V1\Controllers\EmpresaController;
 use App\Http\V1\Controllers\FacturaController;
 use App\Http\V1\Controllers\ImportacionProductoController;
@@ -76,6 +77,20 @@ Route::middleware('auth:empresa')->group(function () {
         Route::post('facturas/{documento}/anular', [FacturaController::class, 'anular'])
             ->middleware(ExigirPermiso::class.':'.Permisos::FACTURAS_ANULAR)
             ->name('v1.facturas.anular');
+
+        // --- hoja de cuadre (CAJ-11 a CAJ-14) ---
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CAJA_VER)->group(function () {
+            Route::get('cuadres', [CuadreController::class, 'index'])->name('v1.cuadres.index');
+            // Antes que {hoja}: si no, "facturado" se toma por un identificador.
+            Route::get('cuadres/facturado', [CuadreController::class, 'facturado'])->name('v1.cuadres.facturado');
+            Route::get('cuadres/{hoja}', [CuadreController::class, 'ver'])->name('v1.cuadres.ver');
+            Route::get('cuadres/{hoja}/pdf', [CuadreController::class, 'pdf'])->name('v1.cuadres.pdf');
+        });
+
+        Route::middleware(ExigirPermiso::class.':'.Permisos::CAJA_CUADRAR)->group(function () {
+            Route::post('cuadres', [CuadreController::class, 'guardar'])->name('v1.cuadres.guardar');
+            Route::put('cuadres/{hoja}', [CuadreController::class, 'actualizar'])->name('v1.cuadres.actualizar');
+        });
 
         // --- clientes (CLI-01, CLI-02) ---
         Route::get('clientes', [ClienteController::class, 'index'])

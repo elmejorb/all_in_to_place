@@ -95,6 +95,7 @@ node api/tests/navegador/revisar-importacion.mjs  # importar y exportar por CSV
 node api/tests/navegador/revisar-clientes.mjs     # clientes, exención y crédito
 node api/tests/navegador/revisar-facturacion.mjs  # venta rápida de mostrador
 node api/tests/navegador/revisar-hoja-factura.mjs # borrador, vista previa, emitir y anular
+node api/tests/navegador/revisar-cuadre.mjs       # cierre de caja por turno y su PDF
 ```
 
 Los dos últimos necesitan las dos aplicaciones andando y no dependen de cuántas
@@ -131,5 +132,13 @@ compartido entre peticiones.
   servirla desde el propio dominio: la política de seguridad de contenido
   (SEG-25) no debería permitir un tercero, y una panadería con internet
   intermitente vería la letra de respaldo.
+- **La sesión de la base habla UTC, y tiene que seguir así.** Laravel manda las
+  fechas sin desfase y Postgres las interpreta en la zona de su sesión; el
+  clúster de esta máquina venía en Bogotá y cada marca de tiempo se guardaba
+  cinco horas corrida. Lo fija `'timezone' => 'UTC'` en las tres conexiones de
+  `config/database.php`. Si alguien lo quita, nada falla a la vista: solo el
+  cuadre por turno empieza a comparar contra las horas equivocadas.
+- **El PDF se maqueta con tablas.** dompdf no entiende flex ni grid, así que las
+  plantillas de `resources/views/pdf` no comparten estilos con la aplicación.
 - **Redis todavía no está.** Colas y caché usan la base de datos mientras tanto;
   cambiar `QUEUE_CONNECTION` y `CACHE_STORE` cuando se instale.

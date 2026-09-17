@@ -477,3 +477,88 @@
   .hoja__cierre { gap: var(--e4); }
   .hoja__gran-total { text-align: left; }
 }
+
+/* --- hoja de cuadre (docs/16) --------------------------------------------
+   Reaprovecha el papel de la factura: es otro documento que se escribe, se
+   imprime y se archiva. Lo propio es la rejilla de dos columnas del encabezado
+   y el contraste con lo que el sistema facturó. */
+
+.cuadre-pantalla { display: flex; flex-direction: column; }
+
+.cuadre {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-flotante);
+  padding: var(--e5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  max-width: 60rem;
+}
+
+.cuadre__rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e5); }
+.cuadre__columna { display: flex; flex-direction: column; gap: var(--e3); }
+
+@media (max-width: 760px) {
+  .cuadre { padding: var(--e4); }
+  .cuadre__rejilla { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Una cifra que sale de las otras: se lee, no se escribe. */
+.cuadre__calculado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  background: var(--superficie-3);
+  border-radius: var(--radio-menor);
+  color: var(--texto-2);
+}
+.cuadre__calculado b { font-size: var(--t-medio); color: var(--texto); }
+.cuadre__calculado[data-fuerte="true"] { background: var(--marca-suave); }
+.cuadre__calculado[data-fuerte="true"] span { color: var(--marca-fuerte); font-weight: 600; }
+.cuadre__calculado[data-fuerte="true"] b { font-size: var(--t-mayor); color: var(--marca-fuerte); }
+
+/* Lo que el sistema facturó, junto a lo que se escribió (CAJ-12). */
+.contraste { color: var(--tenue); font-size: var(--t-menor); }
+.contraste b { color: var(--peligro); font-weight: 700; }
+.contraste[data-cuadra="true"] { color: var(--bien); }
+
+.cuadre__nota-sistema {
+  margin-top: auto;
+  padding: var(--e2) var(--e3);
+  background: var(--superficie-2);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-menor);
+  color: var(--texto-2);
+  font-size: var(--t-menor);
+}
+
+.cuadre__gastos { display: flex; flex-direction: column; }
+.cuadre__gastos h2 { font-size: var(--t-medio); margin-bottom: var(--e2); }
+.cuadre__gastos .renglones-hoja td input { text-align: left; }
+.cuadre__gastos .renglones-hoja td.derecha input { text-align: right; }
+
+.cuadre__cierre {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, auto);
+  gap: var(--e5);
+  align-items: start;
+  border-top: 1px solid var(--borde);
+  padding-top: var(--e4);
+}
+
+@media (max-width: 760px) {
+  .cuadre__cierre { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Un campo con la etiqueta al lado, para la barra de filtros. */
+.campo--enfila { flex-direction: row; align-items: center; gap: var(--e2); }
+.campo--enfila label { white-space: nowrap; }
+
+@media print {
+  .cuadre { border: 0; box-shadow: none; padding: 0; max-width: none; }
+  .cuadre__nota-sistema, .cuadre__gastos .renglon-hoja__quitar { display: none; }
+}

@@ -38,6 +38,7 @@ propias rutas. Ver [docs/00-decision-arquitectura.md](docs/00-decision-arquitect
 | 13 | [Seguridad](docs/13-seguridad.md) | Identidad, autorización, datos, web, operación y qué se prueba solo |
 | 14 | [Proceso y calidad](docs/14-proceso-y-calidad.md) | Definición de terminado, orden de trabajo, ambiente local |
 | 15 | [La hoja de factura](docs/15-pantalla-de-factura.md) | Cómo se escribe una factura: borrador, vista previa y emisión |
+| 16 | [La hoja de cuadre](docs/16-hoja-de-cuadre.md) | El cierre de caja por turno, y el fallo de horas que destapó |
 | — | [matriz-requisitos.csv](docs/matriz-requisitos.csv) | Todos los requisitos en una tabla para seguimiento |
 
 ## Convenciones
