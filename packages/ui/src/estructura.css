@@ -97,13 +97,24 @@
   white-space: nowrap;
 }
 
+.rail__item {
+  transition: background .12s var(--curva), color .12s var(--curva), box-shadow .14s var(--curva);
+}
+
 .rail__item:hover { background: var(--rail-2); color: var(--rail-texto-fuerte); }
+/* La misma barrita del menú desplegable, para que el lateral y la barra
+   superior se comporten igual al pasar por encima. */
+.rail__item:hover { box-shadow: inset 2px 0 0 var(--rail-borde); }
 
 .rail__item[aria-current="page"] {
   background: var(--rail-activo);
   color: var(--rail-texto-fuerte);
   font-weight: 600;
   box-shadow: inset 2px 0 0 var(--marca);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__item { transition: none; }
 }
 
 .rail__icono { width: 1.125rem; text-align: center; flex: none; font-size: var(--t-medio); line-height: 1; }
@@ -127,7 +138,7 @@
   border-bottom: 1px solid var(--borde);
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-barra);
 }
 
 .barra-superior__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e1); }
@@ -172,24 +183,54 @@
   max-width: 18rem;
 }
 .desplegable__boton:hover { background: var(--superficie-3); border-color: var(--borde); }
-.desplegable__punta { color: var(--tenue); font-size: var(--t-menor); }
+
+/* Abierto se queda marcado: mientras el menú está desplegado se ve de dónde
+   salió, que es lo que faltaba para que no pareciera un menú flotando solo. */
+.desplegable__boton[aria-expanded="true"] {
+  background: var(--marca-suave);
+  border-color: var(--marca);
+  color: var(--marca-fuerte);
+}
+
+.desplegable__punta {
+  color: var(--tenue);
+  font-size: var(--t-menor);
+  transition: transform .18s var(--curva);
+}
+.desplegable__boton[aria-expanded="true"] .desplegable__punta {
+  transform: rotate(180deg);
+  color: var(--marca-fuerte);
+}
 
 .desplegable__menu {
   position: absolute;
-  top: calc(100% + 4px);
-  min-width: 15rem;
-  max-width: 22rem;
+  top: calc(100% + 6px);
+  min-width: 17rem;
+  max-width: 24rem;
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
-  box-shadow: var(--sombra-flotante);
-  padding: var(--e1);
-  z-index: 30;
+  box-shadow: var(--sombra-menu);
+  padding: var(--e2);
+  z-index: 1;
   max-height: 22rem;
   overflow-y: auto;
+  /* Nace desde el botón, no desde el centro de la pantalla. */
+  transform-origin: top var(--origen, left);
+  animation: menu-aparece .16s var(--curva);
 }
-.desplegable__menu[data-alineado="derecha"] { right: 0; }
-.desplegable__menu[data-alineado="izquierda"] { left: 0; }
+.desplegable__menu[data-alineado="derecha"] { right: 0; --origen: right; }
+.desplegable__menu[data-alineado="izquierda"] { left: 0; --origen: left; }
+
+@keyframes menu-aparece {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desplegable__menu { animation: none; }
+  .desplegable__punta { transition: none; }
+}
 
 .menu__titulo {
   margin: 0;
@@ -202,9 +243,10 @@
 }
 
 .menu__item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--e2);
+  gap: var(--e3);
   width: 100%;
   font: inherit;
   font-size: var(--t-base);
@@ -212,27 +254,80 @@
   background: none;
   border: 0;
   border-radius: var(--radio-menor);
-  padding: var(--e2);
+  padding: var(--e2) var(--e2) var(--e2) var(--e3);
   cursor: pointer;
   text-align: left;
+  transition: background .12s var(--curva), color .12s var(--curva);
 }
+
+/* La barrita de la izquierda crece al pasar por encima: dice cuál se va a
+   elegir sin desplazar nada de sitio. */
+.menu__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--marca);
+  border-radius: 0 2px 2px 0;
+  transform: translateY(-50%);
+  transition: height .14s var(--curva);
+}
+
 .menu__item:hover { background: var(--superficie-3); }
-.menu__item[aria-current="true"] { background: var(--marca-suave); color: var(--marca-fuerte); font-weight: 600; }
-.menu__item small { display: block; color: var(--tenue); font-weight: 400; }
+.menu__item:hover::before { height: 55%; }
+.menu__item:focus-visible { background: var(--superficie-3); }
+
+.menu__item[aria-current="true"] {
+  background: var(--marca-suave);
+  color: var(--marca-fuerte);
+  font-weight: 600;
+}
+.menu__item[aria-current="true"]::before { height: 65%; }
+
+/* La marca de "esta es en la que estás", al final de la fila. */
+.menu__item[aria-current="true"]::after {
+  content: "✓";
+  margin-left: auto;
+  padding-left: var(--e2);
+  font-weight: 700;
+  color: var(--marca);
+}
+
+.menu__item small { display: block; color: var(--tenue); font-weight: 400; font-size: var(--t-menor); }
+.menu__item[aria-current="true"] small { color: var(--marca-fuerte); opacity: .75; }
+.menu__item[data-estatico="true"] { cursor: default; }
+.menu__item[data-estatico="true"]:hover { background: none; }
+.menu__item[data-estatico="true"]:hover::before { height: 0; }
+
 .menu__item[data-tono="peligro"] { color: var(--peligro); }
-.menu__separador { height: 1px; background: var(--borde); margin: var(--e1) 0; }
+.menu__item[data-tono="peligro"]::before { background: var(--peligro); }
+.menu__item[data-tono="peligro"]:hover { background: var(--peligro-suave); }
+
+.menu__separador { height: 1px; background: var(--borde); margin: var(--e2) calc(var(--e2) * -1); }
 
 .inicial {
   display: grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   flex: none;
   border-radius: var(--radio-menor);
-  background: var(--marca-suave);
+  /* Un degradado muy corto: le da cuerpo sin volverse un adorno. */
+  background: linear-gradient(160deg, var(--marca-suave), var(--superficie-3));
+  box-shadow: inset 0 0 0 1px var(--borde);
   color: var(--marca-fuerte);
   font-size: var(--t-micro);
   font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.menu__item[aria-current="true"] .inicial,
+.desplegable__boton[aria-expanded="true"] .inicial {
+  background: var(--marca);
+  color: var(--sobre-marca);
+  box-shadow: none;
 }
 
 .menu__buscador {
@@ -254,7 +349,7 @@
   position: fixed;
   right: var(--e4);
   bottom: var(--e4);
-  z-index: 60;
+  z-index: var(--z-avisos);
   display: flex;
   flex-direction: column;
   gap: var(--e2);
@@ -425,7 +520,7 @@ tr:hover .acciones, tr:focus-within .acciones { opacity: 1; }
 
 /* --------------------------------------------------------- panel lateral -- */
 
-.panel-lateral { position: fixed; inset: 0; z-index: 50; display: flex; justify-content: flex-end; }
+.panel-lateral { position: fixed; inset: 0; z-index: var(--z-panel); display: flex; justify-content: flex-end; }
 .panel-lateral__fondo { position: absolute; inset: 0; background: rgba(7, 20, 18, .5); border: 0; }
 
 .panel-lateral__caja {
@@ -558,7 +653,7 @@ tr:hover .acciones, tr:focus-within .acciones { opacity: 1; }
     position: fixed;
     inset: 0 auto 0 0;
     width: 14.5rem;
-    z-index: 45;
+    z-index: var(--z-cajon);
     transform: translateX(-100%);
     transition: transform .18s ease-out;
   }
@@ -574,7 +669,7 @@ tr:hover .acciones, tr:focus-within .acciones { opacity: 1; }
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 44;
+    z-index: var(--z-velo);
     background: rgba(7, 20, 18, .5);
     border: 0;
   }
@@ -771,7 +866,7 @@ table.tabla--previa td { vertical-align: top; padding-top: var(--e2); padding-bo
    dar de alta un cliente o un producto sin salir de la factura. Va por encima
    del panel lateral, porque puede abrirse desde dentro de él. */
 
-.dialogo { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: var(--e4); }
+.dialogo { position: fixed; inset: 0; z-index: var(--z-dialogo); display: flex; align-items: center; justify-content: center; padding: var(--e4); }
 .dialogo__fondo { position: absolute; inset: 0; background: rgba(7, 20, 18, .5); border: 0; }
 
 .dialogo__caja {

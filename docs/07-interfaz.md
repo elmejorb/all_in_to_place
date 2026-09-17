@@ -50,3 +50,36 @@ Definirlos una vez ahorra decisiones y mantiene la app coherente:
 5. **Aviso de resultado.** Toda acción responde: confirmación breve al guardar,
    mensaje junto al campo al fallar la validación, y aviso con identificador de
    error cuando falla el servidor.
+
+## Quién va encima de quién
+
+Los `z-index` salen todos de unas variables en `tokens.css` y **no se escriben
+sueltos en ninguna hoja de estilos**. Repartirlos por los archivos es cómo se
+acaba con una barra pegajosa de una pantalla tapando el menú de la barra
+superior, que es exactamente lo que pasó con la hoja de factura.
+
+| Capa | Variable |
+|---|---|
+| Barras pegajosas dentro de una pantalla | `--z-pantalla` |
+| Menú lateral | `--z-rail` |
+| Barra superior, y los desplegables que cuelgan de ella | `--z-barra` |
+| Velo y cajón del menú en móvil | `--z-velo`, `--z-cajon` |
+| Panel lateral de captura | `--z-panel` |
+| Vista previa de un documento | `--z-previa` |
+| Diálogo corto | `--z-dialogo` |
+| Avisos | `--z-avisos` |
+
+La regla de fondo: **lo que es de la aplicación va por encima de lo que es de la
+pantalla**. Una barra que se pega dentro del contenido se aparca debajo de la
+barra superior, nunca sobre ella.
+
+`revisar-hoja-factura.mjs` lo comprueba abriendo el selector de empresa desde una
+pantalla con barra pegajosa, porque es un fallo que no se ve hasta que alguien
+hace justo eso.
+
+## Movimiento
+
+Las transiciones son cortas —de 120 a 180 ms— y sirven para explicar de dónde
+sale algo: el menú desplegable nace desde su botón, la punta gira, y la barrita
+de la izquierda crece al pasar por encima sin mover nada de sitio. Todas se
+apagan con `prefers-reduced-motion`. Nada se mueve porque sí.

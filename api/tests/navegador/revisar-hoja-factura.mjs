@@ -70,6 +70,27 @@ try {
   await pagina.waitForSelector(".hoja");
   await capturar(pagina, "120-hoja-en-blanco");
 
+  // La barra de la hoja es pegajosa: no puede taparle los menús a la barra de
+  // la aplicación. Pasó una vez y no se ve hasta que alguien abre el selector
+  // de empresa estando en esta pantalla.
+  await pagina.locator(".barra-superior .desplegable__boton").first().click();
+  await pagina.waitForSelector(".desplegable__menu");
+  const menuEncima = await pagina.evaluate(() => {
+    const menu = document.querySelector(".desplegable__menu").getBoundingClientRect();
+    const debajo = document.elementFromPoint(menu.left + menu.width / 2, menu.bottom - 8);
+    return debajo?.closest(".desplegable__menu") !== null;
+  });
+  revisar("El menú de la barra superior queda por encima de la hoja", menuEncima);
+  await pagina.keyboard.press("Escape");
+  await pagina.waitForSelector(".desplegable__menu", { state: "detached" });
+
+  const barras = await pagina.evaluate(() => {
+    const arriba = document.querySelector(".barra-superior").getBoundingClientRect();
+    const hoja = document.querySelector(".hoja-barra").getBoundingClientRect();
+    return Math.round(hoja.top) >= Math.round(arriba.bottom);
+  });
+  revisar("Y la barra de la hoja se aparca debajo, sin solaparse", barras);
+
   const membrete = await pagina.locator(".hoja__emisor").innerText();
   revisar("La hoja lleva el membrete de la empresa", membrete.includes("Panadería El Álamo"));
   revisar("Con su dirección y su teléfono", membrete.includes("Bayamón") && membrete.includes("787"));

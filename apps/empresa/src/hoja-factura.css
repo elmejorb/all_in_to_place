@@ -22,8 +22,9 @@
 
 .hoja-barra {
   position: sticky;
-  top: 0;
-  z-index: 20;
+  /* Se aparca justo debajo de la barra superior, no encima de ella. */
+  top: 3rem;
+  z-index: var(--z-pantalla);
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -382,7 +383,7 @@
 .previa-velo {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--z-previa);
   background: rgba(13, 35, 32, .55);
   overflow: auto;
   padding: var(--e5) var(--e4);
